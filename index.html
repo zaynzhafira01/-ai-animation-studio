@@ -1865,6 +1865,63 @@ function parseDbString(raw) {
   };
 }
 
+// ── FALLBACK POOL — dipakai kalau database gagal load ──
+const IDEA_POOLS = {
+  Cinematic: [
+    'Seorang seniman jalanan menemukan lukisannya sendiri di museum bergengsi — tanpa ingat kapan membuatnya',
+    'Robot yang ditugaskan menghancurkan kota justru belajar jatuh cinta pada taman bunga terakhir di dunia',
+    'Seorang anak kecil menulis surat ke masa depan — 20 tahun kemudian, suratnya datang balik',
+    'Kucing liar di gang sempit menyimpan rahasia seluruh kota selama bertahun-tahun',
+    'Seorang penari kehilangan pendengarannya — dan justru menemukan ritme terbaik hidupnya',
+    'Surat wasiat nenek hanya berisi satu alamat misterius di kota yang tidak ada di peta',
+    'Dua orang asing terjebak di lift selama satu malam — dan menyadari mereka pernah saling kenal di kehidupan lain',
+    'Seorang fotografer menemukan foto dirinya sendiri dari 30 tahun sebelum ia lahir',
+  ],
+  Fantasy: [
+    'Seorang gadis kecil yang bisa mendengar bisikan buku-buku di perpustakaan tua',
+    'Penyihir terakhir di dunia menjual ingatan orang-orang sebagai obat rindu',
+    'Di langit ke-7, ada toko yang menjual mimpi yang tidak pernah terwujud',
+    'Seekor naga tua yang lupa cara terbang karena terlalu lama bersembunyi',
+    'Peri bunga yang kehilangan warnanya ketika musim semi datang terlambat',
+  ],
+  Romance: [
+    'Dua barista di coffee shop yang sama — selalu beda shift, selalu meninggalkan pesan di cangkir',
+    'Sepasang kekasih yang berkomunikasi hanya lewat origami yang diselipkan di rak buku toko',
+    'Seorang pelukis yang jatuh cinta pada suara orang yang ia gambar tanpa pernah bertemu langsung',
+    'Dua orang yang rutin duduk di bangku taman yang sama setiap sore — tapi tidak pernah sekalipun bicara',
+    'Paket kiriman yang salah alamat — dan surat balasan yang justru mengubah segalanya',
+  ],
+  Drama: [
+    'Seorang ibu yang baru sadar anaknya sudah dewasa saat anak itu pertama kali bilang "tidak"',
+    'Tiga saudara yang memilah barang-barang ayah — dan menemukan kehidupan yang tidak mereka kenal',
+    'Seorang guru yang mengunjungi muridnya 20 tahun kemudian dan tidak mengenali dirinya sendiri',
+    'Rumah lama yang harus dijual — dan satu keluarga yang baru sadar mereka belum pernah beneran ngobrol',
+    'Seorang atlet yang kalah — dan justru menang hari itu juga',
+  ],
+  Comedy: [
+    'Robot asisten rumah tangga yang terlalu jujur dan selalu bilang hal yang tidak perlu dikatakan',
+    'Kucing yang tiba-tiba bisa berbicara dan pertama kali bilang "kita perlu ngobrol serius"',
+    'Anak SD yang secara tidak sengaja memenangkan kontes memasak internasional',
+    'Nenek yang lebih jago main game online dari semua cucunya gabungan',
+    'Pria yang takut ketinggian terpilih jadi astronot karena salah isi formulir',
+  ],
+};
+
+function getPoolIdeas(count = 5) {
+  const genreRaw = [...sel.genre][0] || 'Cinematic';
+  const genre = genreRaw.replace(/^[^a-zA-Z]+/, '').trim();
+
+  // Ambil dari genre yang relevan, fallback ke Cinematic
+  const pool = IDEA_POOLS[genre] || IDEA_POOLS['Cinematic'];
+  const allPools = Object.values(IDEA_POOLS).flat();
+
+  // Gabungkan pool genre + sisa dari semua pool supaya cukup
+  const merged = [...pool, ...allPools.filter(x => !pool.includes(x))];
+  const shuffled = [...merged].sort(() => Math.random() - 0.5);
+  const raw = shuffled.slice(0, count);
+  return raw.map(str => parseDbString(str));
+}
+
 // ── DOMContentLoaded: preload database di background ──
 document.addEventListener('DOMContentLoaded', () => {
   loadDatabase(); // preload tanpa blocking
@@ -2050,30 +2107,42 @@ async function generate(){
 
   panel.innerHTML = '<div class="out-empty"><div style="font-size:2rem;animation:blink2 .8s ease infinite">&#10022;</div><div class="oe-title" style="margin-top:.5rem">Menyusun ide kamu...</div><div class="oe-sub">Mengambil dari database &#10024;</div></div>';
 
-  // ── Kalau user ketik topik → 1 custom + 4 dari database ──
-  if (topic) {
-    await new Promise(r => setTimeout(r, 350));
-    const customIdea = buildLocalIdea()[0];
-    const dbIdeas = await getDbIdeas(4);
-    const pool4 = dbIdeas || getPoolIdeas(4);
-    renderIdeas([customIdea, ...pool4]);
-    toast('&#10022; 5 ide siap — 1 custom + 4 dari database!');
-    btn.classList.remove('loading'); btn.disabled = false;
-    return;
-  }
+  try {
+    // ── Kalau user ketik topik → 1 custom + 4 dari database ──
+    if (topic) {
+      await new Promise(r => setTimeout(r, 350));
+      const customIdea = buildLocalIdea()[0];
+      const dbIdeas = await getDbIdeas(4);
+      const pool4 = dbIdeas || getPoolIdeas(4);
+      renderIdeas([customIdea, ...pool4]);
+      toast('&#10022; 5 ide siap — 1 custom + 4 dari database!');
+      return;
+    }
 
-  // ── Tidak ada topik → ambil 5 dari database (by genre/topik) ──
-  await new Promise(r => setTimeout(r, 350));
-  const dbIdeas = await getDbIdeas(5);
-  if (dbIdeas && dbIdeas.length) {
-    renderIdeas(dbIdeas);
-    toast('&#10022; 5 ide dari database siap!');
-  } else {
-    const ideas = getPoolIdeas(5);
-    renderIdeas(ideas);
-    toast('&#10022; 5 ide siap!');
+    // ── Tidak ada topik → ambil 5 dari database (by genre/topik) ──
+    await new Promise(r => setTimeout(r, 350));
+    const dbIdeas = await getDbIdeas(5);
+    if (dbIdeas && dbIdeas.length) {
+      renderIdeas(dbIdeas);
+      toast('&#10022; 5 ide dari database siap!');
+    } else {
+      const ideas = getPoolIdeas(5);
+      renderIdeas(ideas);
+      toast('&#10022; 5 ide siap!');
+    }
+  } catch(err) {
+    console.error('[generate] Error:', err);
+    // Fallback paling aman — pakai pool lokal langsung
+    try {
+      const ideas = getPoolIdeas(5);
+      renderIdeas(ideas);
+      toast('&#10022; 5 ide siap!');
+    } catch(e2) {
+      panel.innerHTML = '<div class="out-empty"><div class="oe-icon">&#128532;</div><div class="oe-title">Gagal generate</div><div class="oe-sub">Coba refresh halaman ya!</div></div>';
+    }
+  } finally {
+    btn.classList.remove('loading'); btn.disabled = false;
   }
-  btn.classList.remove('loading'); btn.disabled = false;
 }
 
 
