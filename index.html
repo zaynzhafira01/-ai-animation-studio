@@ -722,9 +722,56 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
   position:absolute;top:.5rem;right:.6rem;
   font-size:.55rem;font-weight:700;color:#7A6A54;letter-spacing:.08em;text-transform:uppercase;
 }
-.vp-prompt-text { color:#FAE3C8; }
+.vp-prompt-text { color:#FAE3C8; white-space:pre-wrap; word-break:break-word; }
 .vp-prompt-text .accent-action { color:#E8842A;font-weight:600; }
 .vp-prompt-text .accent-cam { color:#A8D090;font-weight:600; }
+/* Short Video Quick Cuts format */
+.sv-header-block { margin-bottom:.6rem; padding-bottom:.5rem; border-bottom:1px solid rgba(232,132,42,.2); }
+.sv-field { display:flex; gap:.4rem; margin-bottom:.22rem; font-size:.74rem; line-height:1.5; }
+.sv-key { color:#E8842A; font-weight:700; min-width:90px; flex-shrink:0; }
+.sv-val { color:#F4EBDA; }
+.sv-section-title { color:#E8842A; font-weight:700; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; margin:.7rem 0 .35rem; border-top:1px solid rgba(232,132,42,.15); padding-top:.5rem; }
+.sv-shot-row { display:flex; gap:.55rem; margin-bottom:.55rem; align-items:flex-start; }
+.sv-shot-time { background:rgba(90,107,60,.2); color:#A8D090; font-size:.63rem; font-weight:700; padding:.15rem .4rem; border-radius:4px; white-space:nowrap; flex-shrink:0; margin-top:.12rem; font-family:monospace; }
+.sv-shot-body { flex:1; }
+.sv-shot-action { color:#FAE3C8; font-size:.75rem; line-height:1.55; margin-bottom:.18rem; }
+.sv-shot-meta { color:#7A6A54; font-size:.67rem; line-height:1.45; }
+.sv-shot-meta span { margin-right:.6rem; }
+.sv-shot-meta .svm-l { color:#D4A017; }
+.sv-shot-meta .svm-e { color:#A8D0F0; }
+.sv-shot-meta .svm-s { color:#A8D090; }
+.sv-edit-row { margin-top:.6rem; padding-top:.5rem; border-top:1px solid rgba(232,132,42,.12); font-size:.7rem; color:#A89880; display:flex; gap:.4rem; flex-wrap:wrap; }
+.sv-edit-pill { background:rgba(90,70,40,.15); padding:.1rem .45rem; border-radius:4px; }
+.sv-seg-badge { display:inline-flex;align-items:center;gap:5px; background:linear-gradient(135deg,rgba(212,92,60,.18),rgba(232,132,42,.18)); color:#E8842A; font-size:.65rem; font-weight:700; padding:.22rem .65rem; border-radius:100px; border:1px solid rgba(232,132,42,.25); margin-bottom:.7rem; }
+
+/* ── AI Animation Director Banner ── */
+.director-banner {
+  display:flex; align-items:center; gap:1rem;
+  background:linear-gradient(135deg,#1A1510,#2D2018);
+  border:1px solid rgba(232,132,42,.25);
+  border-radius:18px; padding:1.1rem 1.4rem;
+  margin-top:1.5rem; text-decoration:none;
+  transition:.22s; position:relative; overflow:hidden;
+}
+.director-banner::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+  background:linear-gradient(180deg,#D45C3C,#E8842A);
+  border-radius:4px 0 0 4px;
+}
+.director-banner:hover { border-color:rgba(232,132,42,.5); transform:translateY(-2px); box-shadow:0 8px 28px rgba(212,92,60,.2); }
+.director-banner:hover .db-arrow { transform:translateX(4px); }
+.db-icon {
+  width:46px; height:46px; border-radius:13px; flex-shrink:0;
+  background:linear-gradient(135deg,#D45C3C,#E8842A);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; box-shadow:0 4px 14px rgba(212,92,60,.35);
+}
+.db-text { flex:1; }
+.db-label { font-size:.62rem; font-weight:700; color:#E8842A; text-transform:uppercase; letter-spacing:.08em; margin-bottom:.22rem; }
+.db-title { font-family:'Playfair Display',serif; font-weight:700; font-size:.95rem; color:#FFFCF5; margin-bottom:.2rem; }
+.db-sub { font-size:.75rem; color:#A89880; line-height:1.5; }
+.db-sub strong { color:#FAE3C8; }
+.db-arrow { font-size:1rem; color:#E8842A; transition:.18s; flex-shrink:0; }
 
 .vp-panel-acts { display:flex;gap:.4rem;flex-wrap:wrap; }
 .btn-vp-act {
@@ -1528,7 +1575,7 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
           <label class="flbl">&#128221; Topik / Ide Cerita</label>
           <input class="finput" id="f_topic" type="text" placeholder="Contoh: petualangan kucing lucu di kota Tokyo..." oninput="onTopicInput()"/>
         </div>
-        <div class="frow">
+        <div class="frow" style="display:none">
           <label class="flbl">&#127919; Target Audiens</label>
           <div class="chips" id="c_aud">
             <div class="chip" onclick="tog(this,'aud')">Anak-anak</div>
@@ -1543,15 +1590,8 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
         <div class="frow">
           <label class="flbl">&#127902; Jenis Video</label>
           <div class="chips" id="c_type">
-            <div class="chip co" onclick="tog(this,'type')">Storytelling</div>
-            <div class="chip co on" onclick="tog(this,'type')">Cinematic</div>
-            <div class="chip co" onclick="tog(this,'type')">Komedi</div>
-            <div class="chip co" onclick="tog(this,'type')">Promosi</div>
-            <div class="chip co" onclick="tog(this,'type')">Emotional</div>
-            <div class="chip co" onclick="tog(this,'type')">Meme</div>
-            <div class="chip co" onclick="tog(this,'type')">Edukasi</div>
-            <div class="chip co" onclick="tog(this,'type')">Product Ads</div>
-            <div class="chip co" onclick="tog(this,'type')">Trailer</div>
+            <div class="chip co on" onclick="tog(this,'type')">Short Video</div>
+            <div class="chip co" onclick="tog(this,'type')">Long Video</div>
           </div>
         </div>
         <div class="frow">
@@ -1566,8 +1606,8 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
             <div class="chip am" onclick="tog(this,'mood')">Cute</div>
           </div>
         </div>
-        <div class="fdiv"></div>
-        <div class="frow">
+        <div class="fdiv" style="display:none"></div>
+        <div class="frow" style="display:none">
           <label class="flbl">&#127916; Genre</label>
           <div class="chips" id="c_genre">
             <div class="chip on" onclick="tog(this,'genre')">&#127902; Cinematic</div>
@@ -1601,7 +1641,7 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
             <div class="chip ol" onclick="tog(this,'rat')">1:1 (Instagram)</div>
           </div>
         </div>
-        <div class="frow">
+        <div class="frow" style="display:none">
           <label class="flbl">&#128241; Platform</label>
           <div class="chips" id="c_plat">
             <div class="chip on" onclick="tog(this,'plat')">TikTok</div>
@@ -2519,7 +2559,7 @@ function renderStoryboard(sheets) {
     </div>
 
     <div class="sb-footer">
-      <span class="sb-footer-info">&#10022; ${sheets.length} prompts siap — paste ke ChatGPT, Midjourney, atau Gemini untuk generate storyboard sheet</span>
+      <span class="sb-footer-info">&#10022; ${sheets.length} storyboard prompt${sheets.length>1?'s':''} siap — generate gambar storyboard-nya langsung di <strong>AI Animation Director</strong> &#8595;</span>
       <div class="sb-footer-acts">
         <button class="btn-sb-act" onclick="generateStoryboard()">&#8635; Regenerate</button>
       </div>
@@ -2527,6 +2567,7 @@ function renderStoryboard(sheets) {
     <button class="btn-next-step" onclick="goStep('videoprompt')">
       Next: Video Prompt Generator &#8594;
     </button>
+    ${directorBannerHtml()}
   `;
 
   // Store export data on window for the export functions
@@ -2660,6 +2701,15 @@ function renderVpSummary() {
   const wrap = document.getElementById('vpSummaryWrap');
   const main = document.getElementById('vpMain');
   const sheets = window.lastSheets;
+  const isShortVideo = [...sel.type].some(t => t.toLowerCase().includes('short'));
+
+  // Update page description dynamically
+  const descEl = document.getElementById('vp-desc-text');
+  if (descEl) {
+    descEl.innerHTML = isShortVideo
+      ? 'AI membuat <strong>1 Quick Cuts prompt per 10 detik</strong> menggunakan template Seamless Quick Cuts Animation. Setiap prompt mencakup 7–9 shots lengkap dengan shot type, kamera, lighting, emosi, dan sound design — siap di-paste ke Veo, Kling, atau Runway.'
+      : 'AI membuat <strong>1 cinematic video prompt per 10 detik</strong>. Setiap prompt mencakup sequence penuh — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora. Bukan per panel, bukan per shot.';
+  }
 
   if (!sheets || !sheets.length) {
     wrap.innerHTML = '';
@@ -2680,20 +2730,22 @@ function renderVpSummary() {
 
   wrap.innerHTML = `
     <div class="vp-summary">
-      <div class="vp-sum-icon">&#127902;</div>
+      <div class="vp-sum-icon">${isShortVideo ? '&#9889;' : '&#127902;'}</div>
       <div class="vp-sum-text">
-        <div class="vp-sum-label">Storyboard Source</div>
+        <div class="vp-sum-label">${isShortVideo ? 'Quick Cuts Mode' : 'Storyboard Source'}</div>
         <div class="vp-sum-title">${title}</div>
         <div class="vp-sum-meta">
-          <strong>${sheets.length} storyboard sheet${sheets.length>1?'s':''}</strong> &middot; ${dur} &middot; ${ratio} &middot; Style: <strong>${curStyle}</strong>
-          &middot; akan menghasilkan <strong>${sheets.length} video prompt</strong> per platform
+          <strong>${sheets.length} segment${sheets.length>1?'s':''}</strong> &middot; ${dur} &middot; ${ratio} &middot; Style: <strong>${curStyle}</strong>
+          &middot; ${isShortVideo
+            ? `akan menghasilkan <strong>${sheets.length} Quick Cuts prompt</strong> (7–9 shots each)`
+            : `akan menghasilkan <strong>${sheets.length} video prompt</strong> per platform`}
         </div>
       </div>
       <button class="btn-sb-act" onclick="goStep('storyboard')">&#128270; Lihat Storyboard</button>
     </div>
   `;
 
-  main.innerHTML = buildVpGridHtml();
+  main.innerHTML = buildVpGridHtml(isShortVideo);
   vpRebindControls();
 }
 
@@ -2795,7 +2847,7 @@ function buildVpGridHtml() {
         </div>
 
         <button class="btn-gen-vp" id="vpBtn" onclick="generateVideoPrompts()">
-          <span class="vp-btxt">&#127916; Generate Video Prompts</span>
+          <span class="vp-btxt" id="vpBtnLabel">&#127916; Generate Video Prompts</span>
           <div class="ld-vp"><span></span><span></span><span></span></div>
         </button>
       </div>
@@ -2805,11 +2857,20 @@ function buildVpGridHtml() {
         <div class="vp-out-empty">
           <div class="vp-out-empty-icon">&#127916;</div>
           <div class="vp-out-empty-title">Video prompt kamu akan muncul di sini</div>
-          <div class="vp-out-empty-sub">Pilih platform target di sidebar &amp; klik<br/>"Generate Video Prompts"</div>
+          <div class="vp-out-empty-sub" id="vpOutEmptySub">Klik "Generate Video Prompts" di sidebar</div>
         </div>
       </div>
     </div>
   `;
+
+  // Update button label based on video type
+  setTimeout(() => {
+    const btnLbl = document.getElementById('vpBtnLabel');
+    const emptySub = document.getElementById('vpOutEmptySub');
+    const isShort = [...sel.type].some(t => t.toLowerCase().includes('short'));
+    if (btnLbl) btnLbl.innerHTML = isShort ? '&#9889; Generate Quick Cuts Prompts' : '&#127916; Generate Video Prompts';
+    if (emptySub) emptySub.textContent = isShort ? 'Klik "Generate Quick Cuts Prompts" di sidebar' : 'Klik "Generate Video Prompts" di sidebar';
+  }, 50);
 }
 
 // ── Toggle a single-select icon-chip in Step 3 ──
@@ -2967,6 +3028,267 @@ function mockVideoPrompts(sheets, platforms) {
   return result;
 }
 
+// ══════════════════════════════════════════════════════════
+// SHORT VIDEO — QUICK CUTS TEMPLATE GENERATOR
+// 1 structured prompt per 10-second segment, fully continuous
+// ══════════════════════════════════════════════════════════
+function buildShortVideoSegments(sheets) {
+  const title   = selectedIdea?.title   || document.getElementById('f_topic').value.trim() || 'Cinematic Story';
+  const hook    = selectedIdea?.hook    || '';
+  const summary = selectedIdea?.summary || '';
+  const style   = curStyle;
+  const mood    = [...sel.mood][0]  || 'Dreamy';
+  const ratio   = [...sel.rat][0]   || '9:16';
+  const dur     = [...sel.dur][0]   || '30 detik';
+  const durSec  = parseInt(dur) || 30;
+  const totalSegs = sheets.length;
+
+  // ── Shot types ──
+  const SHOT_TYPES  = ['ECU (extreme close-up)', 'CU (close-up)', 'MCU (medium close-up)', 'MS (medium shot)', 'WS (wide shot)', 'POV (point of view)', 'OTS (over the shoulder)', 'tracking shot', 'handheld shot'];
+  const CAM_MOVES   = ['slow push in', 'quick pan right', 'snap zoom forward', 'handheld drift left', 'dolly in', 'whip pan', 'tilt up reveal', 'arc around subject', 'pull back slowly'];
+  const LENSES      = ['24mm wide', '35mm standard', '50mm natural', '85mm portrait', '135mm compressed telephoto'];
+  const LIGHTINGS   = ['warm cinematic backlight', 'harsh directional key light', 'soft diffused ambient', 'neon accent rim light', 'golden hour glow', 'chiaroscuro contrast', 'cool blue practical light'];
+  const EMOTIONS    = ['tense and focused', 'surprised, wide-eyed', 'determined, jaw set', 'amused, slight smirk', 'shocked, breathless', 'relieved, eyes soft', 'curious, leaning forward', 'panicked, gasping', 'joyful, laughing'];
+  const SOUNDS      = [
+    'ambient street hum · footstep foley · sharp impact accent',
+    'low cinematic hum · fabric rustle · rhythmic click',
+    'crowd murmur fading · sharp breath · reverb tail',
+    'brief silence drop · single heartbeat · explosive cue',
+    'ambient wind · slow creak · distant echo',
+    'bass thud transition · glass tink · air whoosh',
+    'mechanical whir · breath catch · drum hit',
+    'nature ambient · twig snap · cinematic sting',
+  ];
+  const MICRO_ACTIONS = [
+    'fingers tense on surface — weight of decision felt',
+    'eyes flick sideways — clocking the threat',
+    'chest rises with sharp intake of breath',
+    'foot pivots, body weight shifts — about to move',
+    'jaw tightens, lips press — holding it all in',
+    'shoulders drop — moment of surrender or relief',
+    'brow furrows, head tilts — piecing it together',
+    'hands open wide — realization hits full force',
+  ];
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  // ── Mood emotional arc ──
+  const MOOD_ARC = {
+    'Dreamy':    'Hazy wonder → quiet anticipation → soft revelation → lingering warmth',
+    'Epic':      'Quiet tension → building intensity → explosive climax → triumphant release',
+    'Dark':      'Unsettling calm → creeping dread → shocking reveal → haunting aftermath',
+    'Funny':     'Ordinary setup → escalating absurdity → comedic peak → ironic punchline',
+    'Emotional': 'Quiet vulnerability → suppressed pain → breaking point → cathartic release',
+    'Happy':     'Playful energy → joyful anticipation → euphoric peak → warm resolution',
+    'Cute':      'Innocent charm → gentle tension → adorable chaos → sweet payoff',
+  };
+  const moodArc = MOOD_ARC[mood] || 'Calm opening → rising tension → peak moment → satisfying resolution';
+
+  // ── Act labels for multi-segment continuity ──
+  const ACT_LABELS = ['Opening', 'Rising Action', 'Climax', 'Resolution'];
+  const ACT_ENV = [
+    'establishing environment — world comes alive',
+    'new location, tension mounting — character on the move',
+    'peak dramatic space — everything converges here',
+    'final location — changed world, earned ending',
+  ];
+  const ACT_ACTIONS = [
+    'character enters frame, setting the stage with clear intent',
+    'obstacle or challenge emerges, momentum accelerates',
+    'decisive moment — maximum stakes, everything on the line',
+    'payoff lands — punchline, twist, or emotional climax',
+  ];
+
+  const results = [];
+
+  sheets.forEach((sheet, segIdx) => {
+    const tStart  = segIdx * 10;
+    const tEnd    = tStart + 10;
+    const actIdx  = Math.min(segIdx, ACT_LABELS.length - 1);
+    const actLabel = ACT_LABELS[actIdx];
+    const isFirst = segIdx === 0;
+    const isLast  = segIdx === totalSegs - 1;
+
+    // ── Environment flow for this segment ──
+    const envBase = sheet.prompt
+      ? sheet.prompt.split(',').slice(0, 3).join(', ').replace(/cinematic storyboard sheet.*?style,?\s*/i, '').trim()
+      : `${style} environment`;
+    const envFlow = totalSegs === 1
+      ? `Opens in ${envBase} → builds through action → resolves in same space with transformed meaning`
+      : isFirst
+      ? `Establishes the world: ${envBase} → first movement reveals scale and atmosphere`
+      : isLast
+      ? `Final space mirrors the opening — same environment, transformed emotional weight → ironic or cathartic close`
+      : `Continues from previous segment → moves through ${ACT_ENV[actIdx].toLowerCase()} → propels into next beat`;
+
+    // ── Shot generation: 7–9 shots per 10s ──
+    const shotCount = 7 + Math.floor(Math.random() * 3);  // 7–9
+    const shots = [];
+    let cursor = tStart;
+
+    for (let s = 0; s < shotCount; s++) {
+      const isLastShot = s === shotCount - 1;
+      const rawDur  = isLastShot ? (tEnd - cursor) : (0.8 + Math.random() * 0.7);
+      const shotEnd = isLastShot ? tEnd : Math.min(cursor + rawDur, tEnd - 0.5);
+      const shotDur = (shotEnd - cursor).toFixed(1);
+
+      const shotType = pick(SHOT_TYPES);
+      const camMove  = pick(CAM_MOVES);
+      const lens     = pick(LENSES);
+      const lighting = pick(LIGHTINGS);
+      const emotion  = pick(EMOTIONS);
+      const sound    = pick(SOUNDS);
+      const micro    = pick(MICRO_ACTIONS);
+
+      // Action description — contextual based on position
+      let action;
+      if (s === 0 && isFirst) {
+        action = `"${title}" world snaps into frame — ${style} aesthetic fully alive, character caught mid-movement against rich environment. ${micro}`;
+      } else if (isLastShot && isLast) {
+        // Final shot of entire video — strong payoff
+        action = `FINAL BEAT: ${hook ? `"${hook.slice(0,60)}..."` : `"${title}" conclusion`} — payoff lands with full emotional or comedic weight. World holds the moment. ${micro}`;
+      } else if (isLastShot && !isLast) {
+        // Last shot of segment — seamless handoff
+        action = `Segment pivot — ${ACT_ACTIONS[Math.min(segIdx + 1, ACT_ACTIONS.length - 1)]}. Motion carries seamlessly into next sequence. ${micro}`;
+      } else {
+        // Mid-action shots — varied and dynamic
+        const MID = [
+          `character's ${pick(['hands', 'eyes', 'face', 'silhouette'])} in sharp focus — ${style} material texture pops with cinematic clarity. ${micro}`,
+          `environment shifts — new angle reveals narrative layer tied to "${title}". Camera alive with intent. ${micro}`,
+          `action peak: body language loud and clear even at cut speed — story beats land in single frame. ${micro}`,
+          `quick reaction shot — spatial relationship between character and world snaps into focus. ${micro}`,
+          `prop or environment detail carries narrative weight — ${summary ? summary.split('.')[0] : 'story context'} crystallised in one image. ${micro}`,
+          `character in motion — ${camMove} tracks forward, ${style} world streaming past. Energy rising. ${micro}`,
+          `tight two-shot or OTS — power dynamic or connection visible in body language and spacing. ${micro}`,
+        ];
+        action = MID[s % MID.length];
+      }
+
+      shots.push({
+        time: `${cursor.toFixed(1)}s–${shotEnd.toFixed(1)}s`,
+        dur:  shotDur,
+        shotType, camMove, lens, lighting, emotion, sound, action,
+      });
+
+      cursor = shotEnd;
+    }
+
+    // ── Segment highlight note ──
+    const highlightNote = isLast
+      ? 'HIGHLIGHT: Final shot delivers payoff (comedic, dramatic, or twist). Brief silence or sound drop before last shot for maximum impact.'
+      : isFirst
+      ? 'HIGHLIGHT: One establishing shot must convey the full tonal promise of the video.'
+      : 'HIGHLIGHT: Mid-segment moment of surprise, absurdity, or emotional spike to keep energy high.';
+
+    // ── Build the plain-text prompt (for copy/export) ──
+    const segSuffix = totalSegs > 1 ? ` — Part ${segIdx + 1}/${totalSegs}` : '';
+    const plainText =
+`TITLE: "${title}${segSuffix}"
+
+FORMAT: ${ratio}, ${durSec}s total${totalSegs > 1 ? ` | Segment ${segIdx + 1}/${totalSegs}: ${tStart}s–${tEnd}s` : ''}, ultra-fast cinematic pacing, seamless quick cuts animation, no text overlay.
+
+STYLE: ${style} | expressive face | polished materials | cinematic lighting | exaggerated but believable motion | subtle motion blur | dynamic camera.
+
+MOOD: ${moodArc}
+
+ENVIRONMENT FLOW: ${envFlow}
+
+VIDEO SEQUENCE (FAST CUTS) — ${tStart}s to ${tEnd}s [${actLabel}]:
+${highlightNote}
+Rules: dense shot structure (0.8–1.5s/shot) · ${shotCount} shots · varied angles (ECU/CU/MCU/MS/WS/POV/OTS) · every shot contains motion · ${isLast ? 'final payoff/punchline' : 'seamless handoff to next segment'}.
+
+${shots.map(sh =>
+`[${sh.time}] ${sh.shotType}, ${sh.lens}, ${sh.camMove} — ${sh.action}
+  Lighting: ${sh.lighting}  |  Emotion: ${sh.emotion}
+  Sound: ${sh.sound}`
+).join('\n\n')}
+
+EDITING STYLE: Seamless quick cuts · Action-matched transitions · Occasional whip pan or motion blur · Rhythm: fast, tight, continuous.${totalSegs > 1 && !isLast ? `\n\nCONTINUITY NOTE: Segment ${segIdx + 2} picks up immediately — maintain same ${style} visual world, character appearance, and ${mood.toLowerCase()} mood arc.` : ''}`;
+
+    // ── Store shots array for rich HTML rendering ──
+    results.push({
+      text:     plainText,
+      shots:    shots,
+      meta: {
+        title, style, mood, ratio, durSec, tStart, tEnd, actLabel,
+        envFlow, moodArc, highlightNote, segIdx, totalSegs, segSuffix
+      }
+    });
+  });
+
+  return results;
+}
+
+// ── Render Short Video card with rich HTML ──
+function renderShortVideoCard(item, i) {
+  const m = item.meta;
+  const isLast  = i === m.totalSegs - 1;
+  const segLabel = m.totalSegs > 1
+    ? `Part ${m.segIdx + 1}/${m.totalSegs} &nbsp;·&nbsp; ${m.tStart}s–${m.tEnd}s &nbsp;·&nbsp; ${m.actLabel}`
+    : `${m.durSec}s &nbsp;·&nbsp; Single Sequence`;
+
+  const shotsHtml = item.shots.map(sh => `
+    <div class="sv-shot-row">
+      <div class="sv-shot-time">${sh.time}</div>
+      <div class="sv-shot-body">
+        <div class="sv-shot-action"><strong>${sh.shotType}</strong>, ${sh.lens}, <em>${sh.camMove}</em> — ${escapeHtml(sh.action)}</div>
+        <div class="sv-shot-meta">
+          <span class="svm-l">💡 ${escapeHtml(sh.lighting)}</span>
+          <span class="svm-e">🎭 ${escapeHtml(sh.emotion)}</span>
+          <span class="svm-s">🔊 ${escapeHtml(sh.sound)}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  return `
+  <div class="vp-panel-card" style="animation-delay:${i*.06}s; padding:1.4rem 1.5rem;">
+    <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.85rem;">
+      <div class="vp-panel-num" style="width:44px;height:44px;font-size:.8rem;border-radius:12px;flex-shrink:0;">${i+1}</div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:.92rem;color:#1A1510;">Quick Cuts Prompt ${i+1}</div>
+        <div style="font-size:.7rem;color:#7A6A54;margin-top:1px;">⚡ ${segLabel}</div>
+      </div>
+      <div style="margin-left:auto;">
+        <span style="font-size:.62rem;font-weight:700;padding:.22rem .6rem;border-radius:6px;background:#D8E4BE;color:#5A6B3C;text-transform:uppercase;letter-spacing:.04em;">${item.shots.length} shots</span>
+      </div>
+    </div>
+
+    <div class="vp-prompt-box">
+      <div class="vpb-corner">Quick Cuts Template</div>
+
+      <!-- Header block -->
+      <div class="sv-header-block">
+        <div class="sv-seg-badge">⚡ ${m.actLabel} &nbsp;·&nbsp; ${m.tStart}s–${m.tEnd}s</div>
+        <div class="sv-field"><span class="sv-key">TITLE</span><span class="sv-val">"${escapeHtml(m.title)}${escapeHtml(m.segSuffix)}"</span></div>
+        <div class="sv-field"><span class="sv-key">FORMAT</span><span class="sv-val">${m.ratio}, ${m.durSec}s total${m.totalSegs>1?' | Seg '+m.segIdx+'/'+m.totalSegs:''}, ultra-fast cinematic pacing, seamless quick cuts animation</span></div>
+        <div class="sv-field"><span class="sv-key">STYLE</span><span class="sv-val">${escapeHtml(m.style)} · expressive face · polished materials · cinematic lighting · subtle motion blur</span></div>
+        <div class="sv-field"><span class="sv-key">MOOD ARC</span><span class="sv-val">${escapeHtml(m.moodArc)}</span></div>
+        <div class="sv-field"><span class="sv-key">ENV FLOW</span><span class="sv-val">${escapeHtml(m.envFlow)}</span></div>
+      </div>
+
+      <!-- Shots -->
+      <div class="sv-section-title">⚡ VIDEO SEQUENCE (${m.tStart}s–${m.tEnd}s) — ${item.shots.length} shots · 0.8–1.5s each</div>
+      <div style="background:rgba(232,132,42,.06);border-radius:6px;padding:.5rem .6rem;margin-bottom:.55rem;font-size:.67rem;color:#A89880;line-height:1.5;">
+        ${escapeHtml(m.highlightNote)}
+      </div>
+      ${shotsHtml}
+
+      <!-- Editing style -->
+      <div class="sv-edit-row">
+        <span class="sv-edit-pill">Seamless quick cuts</span>
+        <span class="sv-edit-pill">Action-matched transitions</span>
+        <span class="sv-edit-pill">Whip pan / motion blur</span>
+        <span class="sv-edit-pill">Fast · tight · continuous</span>
+        ${!isLast ? `<span class="sv-edit-pill" style="color:#E8842A">→ Continues to Part ${i+2}</span>` : '<span class="sv-edit-pill" style="color:#5A6B3C">✓ Final segment</span>'}
+      </div>
+    </div>
+
+    <div class="vp-panel-acts" style="margin-top:.75rem;">
+      <button class="btn-vp-act primary" onclick="copyVpPanel(${i})">📋 Copy Prompt ${i+1}</button>
+      <button class="btn-vp-act" onclick="copyVpPanelWithLabel(${i})">📝 Copy w/ Label</button>
+    </div>
+  </div>`;
+}
+
 // ── Main generate function (uses sheets, 1 video prompt per 10s) ──
 async function generateVideoPrompts() {
   const sheets = window.lastSheets;
@@ -2982,20 +3304,109 @@ async function generateVideoPrompts() {
   const btn = document.getElementById('vpBtn');
   const out = document.getElementById('vpOut');
   btn.classList.add('loading-vp'); btn.disabled = true;
+
+  const isShortVideo = [...sel.type].some(t => t.toLowerCase().includes('short'));
+
   out.innerHTML = `
     <div class="vp-out-empty">
-      <div style="font-size:2rem;animation:blink 1s ease infinite">&#127916;</div>
-      <div class="vp-out-empty-title" style="margin-top:.5rem">Generating video prompts...</div>
-      <div class="vp-out-empty-sub">Menyusun ${sheets.length} video prompt per platform &#10024;</div>
+      <div style="font-size:2rem;animation:blink 1s ease infinite">${isShortVideo ? '⚡' : '🎬'}</div>
+      <div class="vp-out-empty-title" style="margin-top:.5rem">Generating ${isShortVideo ? 'Quick Cuts' : 'video'} prompts...</div>
+      <div class="vp-out-empty-sub">Menyusun ${sheets.length} ${isShortVideo ? 'quick cuts sequence' : 'video prompt'} ✨</div>
     </div>
   `;
 
-  vpResults = mockVideoPrompts(sheets, vpGenPlatforms);
-  vpPlatform = vpGenPlatforms.includes(vpPlatform) ? vpPlatform : vpGenPlatforms[0];
-  renderVideoPrompts();
-  toast('&#127916; ' + sheets.length + ' video prompt(s) siap untuk ' + vpGenPlatforms.length + ' platform!');
+  await new Promise(r => setTimeout(r, 500));
+
+  if (isShortVideo) {
+    // ── SHORT VIDEO: use Quick Cuts Template ──
+    const shortItems = buildShortVideoSegments(sheets);
+    window._shortVideoItems = shortItems;   // store rich objects globally
+
+    // Build vpResults using plain text (for copy/export compat)
+    vpResults = {};
+    vpGenPlatforms.forEach(pkey => {
+      vpResults[pkey] = shortItems.map(item => item.text);
+    });
+    vpPlatform = vpGenPlatforms.includes(vpPlatform) ? vpPlatform : vpGenPlatforms[0];
+    renderVideoPromptsShort();
+    toast('&#9889; ' + sheets.length + ' Quick Cuts prompt(s) siap!');
+  } else {
+    // ── LONG VIDEO: existing mock generator ──
+    window._shortVideoItems = null;
+    vpResults = mockVideoPrompts(sheets, vpGenPlatforms);
+    vpPlatform = vpGenPlatforms.includes(vpPlatform) ? vpPlatform : vpGenPlatforms[0];
+    renderVideoPrompts();
+    toast('&#127916; ' + sheets.length + ' video prompt(s) siap untuk ' + vpGenPlatforms.length + ' platform!');
+  }
 
   btn.classList.remove('loading-vp'); btn.disabled = false;
+}
+
+// ── AI Animation Director banner HTML ──
+function directorBannerHtml() {
+  return `
+  <a class="director-banner" href="https://chatgpt.com/g/g-6a1174410aa08191840b269bacaec0f1-ai-animation-director" target="_blank" rel="noopener">
+    <div class="db-icon">🎬</div>
+    <div class="db-text">
+      <div class="db-label">AI Animation Director</div>
+      <div class="db-title">Mau ubah storyboard, prompt video, atau penyesuaian lain?</div>
+      <div class="db-sub">Lakukan di sini ya — <strong>AI Animation Director</strong> siap bantu kamu refine ide, revisi shot sequence, ubah mood, dan fine-tune semua detail cerita.</div>
+    </div>
+    <div class="db-arrow">→</div>
+  </a>`;
+}
+
+// ── Render Short Video output (Quick Cuts layout) ──
+function renderVideoPromptsShort() {
+  const out = document.getElementById('vpOut');
+  const items = window._shortVideoItems || [];
+  if (!items.length) return;
+
+  const title = selectedIdea?.title || 'Cinematic Story';
+  const dur   = [...sel.dur][0] || '30 detik';
+
+  const allText = items.map((item, i) =>
+    `═══ QUICK CUTS PROMPT ${i+1} (${item.meta.tStart}s–${item.meta.tEnd}s) ═══\n\n${item.text}`
+  ).join('\n\n' + '─'.repeat(60) + '\n\n');
+
+  out.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem;color:#1A1510;">⚡ ${items.length} Quick Cuts Prompt${items.length>1?'s':''}</span>
+      <span style="font-size:.68rem;font-weight:700;padding:.2rem .6rem;border-radius:6px;background:#FAE3C8;color:#E8842A;">Seamless Quick Cuts Format</span>
+      <div class="sb-actions" style="margin-left:auto;">
+        <button class="btn-vp-act primary" onclick="copyAllVp()">&#128203; Copy All</button>
+        <button class="btn-vp-act" onclick="exportVpTxt()">&#128196; Export TXT</button>
+        <button class="btn-vp-act" onclick="exportVpJson()">&#128190; Export JSON</button>
+      </div>
+    </div>
+
+    ${items.length > 1 ? `
+    <div style="background:linear-gradient(135deg,rgba(212,92,60,.08),rgba(232,132,42,.06));border:1px solid rgba(232,132,42,.2);border-radius:12px;padding:.7rem 1rem;margin-bottom:1.1rem;font-size:.77rem;color:#5A4A35;line-height:1.55;">
+      ⚡ <strong>${items.length} segmen berkesinambungan</strong> — setiap prompt melanjutkan narasi dari segmen sebelumnya. Generate satu per satu di Veo / Runway / Kling secara berurutan untuk visual continuity.
+    </div>` : ''}
+
+    <div class="vp-panel-list">
+      ${items.map((item, i) => renderShortVideoCard(item, i)).join('')}
+    </div>
+
+    <div class="vp-footer">
+      <span class="vp-footer-info">&#10022; ${items.length} Quick Cuts prompt${items.length>1?'s':''} — seamless quick cuts animation format</span>
+      <div class="vp-footer-acts">
+        <button class="btn-vp-act" onclick="generateVideoPrompts()">&#8635; Regenerate</button>
+      </div>
+    </div>
+
+    <div class="vp-tips">
+      <div class="vp-tips-title">&#128161; Tips Quick Cuts Animation</div>
+      <div class="vp-tips-list">
+        <div class="vp-tips-item">Paste setiap prompt ke <strong>Veo 3, Kling, atau Runway</strong> satu per satu sesuai urutan segmen untuk hasil yang berkesinambungan.</div>
+        <div class="vp-tips-item">Setiap prompt sudah mencakup <strong>7–9 shot dalam 10 detik</strong> — detail shot type, kamera, lighting, emosi, dan sound design.</div>
+        ${items.length > 1 ? `<div class="vp-tips-item"><strong>Continuity note:</strong> generate segmen 1 dulu, download hasilnya, lalu gunakan sebagai visual reference saat generate segmen 2 — untuk konsistensi karakter dan dunia.</div>` : ''}
+        <div class="vp-tips-item">Gunakan <strong>Export TXT</strong> untuk menyimpan semua prompt sekaligus dan mudah di-paste ke editor.</div>
+      </div>
+    </div>
+    ${directorBannerHtml()}
+  `;
 }
 
 // ── Render the video prompt output (NEW: 1 card per 10s segment) ──
@@ -3079,6 +3490,7 @@ function renderVideoPrompts() {
         <div class="vp-tips-item">Export JSON untuk menyimpan semua prompts dan mudah di-edit atau di-regenerate nanti.</div>
       </div>
     </div>
+    ${directorBannerHtml()}
   `;
 
   // Store for export
@@ -4165,7 +4577,7 @@ function buildCharPrompt() {
   <div class="studio-body">
     <div class="s-tag" style="background:#E8E4F8;border-color:rgba(74,61,150,.2);color:#4A3D96">&#127916; Step 3</div>
     <h2 class="s-h1">Video Prompt Generator</h2>
-    <p class="s-sub">AI membuat <strong>1 cinematic video prompt per 10 detik</strong>. Setiap prompt mencakup sequence penuh — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora. Bukan per panel, bukan per shot.</p>
+    <p class="s-sub" id="vp-desc-text">AI membuat <strong>1 cinematic video prompt per 10 detik</strong>. Setiap prompt mencakup sequence penuh — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora. Bukan per panel, bukan per shot.</p>
 
     <!-- Storyboard summary (filled by renderVpSummary) -->
     <div id="vpSummaryWrap"></div>
