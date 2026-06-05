@@ -1588,7 +1588,7 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
           <div id="panel-custom">
             <label class="flbl" style="margin-bottom:.5rem">&#127912; Animation Style</label>
             <div class="style-grid-sm" id="styleGridCustom">
-              <div class="sc-sm on" onclick="pickCustomStyle(this,'Clay Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-clay">&#127758;</div><div class="sn-sm">Clay</div></div>
+              <div class="sc-sm" onclick="pickCustomStyle(this,'Clay Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-clay">&#127758;</div><div class="sn-sm">Clay</div></div>
               <div class="sc-sm" onclick="pickCustomStyle(this,'3D Pixar Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-pixar">&#127775;</div><div class="sn-sm">3D Pixar</div></div>
               <div class="sc-sm" onclick="pickCustomStyle(this,'3D Disney Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-disney">&#10024;</div><div class="sn-sm">3D Disney</div></div>
               <div class="sc-sm" onclick="pickCustomStyle(this,'Felt Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-felt">&#129523;</div><div class="sn-sm">Felt</div></div>
@@ -1863,7 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // DB sudah embedded — tidak perlu preload fetch
 });
 
-let curStyle = 'Clay Style';
+let curStyle = '';
 const sel = {
   aud:new Set(['Dewasa']), type:new Set(['Cinematic']),
   mood:new Set(['Dreamy']), dur:new Set(['30 detik']),
@@ -1878,7 +1878,7 @@ function goLanding(){
 function goStudio(){
   document.getElementById('pg-landing').style.display='none';
   document.getElementById('pg-studio').style.display='block';
-  const _sl = document.getElementById('studioLbl'); if (_sl) _sl.textContent = curStyle;
+  const _sl = document.getElementById('studioLbl'); if (_sl) _sl.textContent = curStyle || 'Pilih Style';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function openDemo(){
@@ -1908,9 +1908,9 @@ function pickSbStyle(el, name) {
 function syncAllStylePickers(name) {
   // update floatTag & studioLbl
   const ft = document.getElementById('floatTag');
-  if (ft) ft.textContent = name;
+  if (ft) ft.textContent = name || 'Style';
   const sl = document.getElementById('studioLbl');
-  if (sl) sl.textContent = name;
+  if (sl) sl.textContent = name || 'Pilih Style';
   // sync landing page scards
   document.querySelectorAll('.scard').forEach(c => {
     c.classList.toggle('on', c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
@@ -1961,7 +1961,7 @@ MOOD: ${[...sel.mood].join(', ')}
 DURATION: ${[...sel.dur].join(', ')}
 RATIO: ${[...sel.rat].join(', ')}
 PLATFORM: ${[...sel.plat].join(', ')}
-ANIMATION STYLE: ${curStyle}
+ANIMATION STYLE: ${curStyle || 'Not specified — use a visually appealing animation style'}
 GENRE: ${[...sel.genre][0] || 'Cinematic'}
 
 Return this JSON:
@@ -2094,12 +2094,13 @@ function renderIdeas(ideas){
   const p=document.getElementById('outPanel');
   if(!ideas?.length){p.innerHTML='<div class="out-empty"><div class="oe-icon">&#128532;</div><div class="oe-title">Gagal generate</div><div class="oe-sub">Coba lagi ya!</div></div>';return;}
   window._lastIdeas = ideas; // store full data for useIdea()
-  const sc=badgeMap[curStyle]||['#F3D8B5','#92400E'];
   p.innerHTML=ideas.map((idea,i)=>{
     const tags=(idea.tags||[]).map(t=>`<span class="itag">${t}</span>`).join('');
     const full=`IDEA ${i+1}: ${idea.title}\n\nHOOK:\n${idea.hook}\n\nCONCEPT:\n${idea.summary}\n\nVISUAL:\n${idea.visual_direction}\n\nSTYLE:\n${idea.style_recommendation}\n\nTAGS: ${(idea.tags||[]).join(', ')}`;
+    const ideaBadge = curStyle || '';
+    const ideaSc = badgeMap[ideaBadge] || ['#F3D8B5','#92400E'];
     return `<div class="idea" style="animation-delay:${i*.08}s">
-      <div class="idea-hdr"><span class="idea-num">IDEA ${i+1}</span><span class="idea-badge" style="background:${sc[0]};color:${sc[1]}">${curStyle}</span></div>
+      <div class="idea-hdr"><span class="idea-num">IDEA ${i+1}</span>${ideaBadge ? `<span class="idea-badge" style="background:${ideaSc[0]};color:${ideaSc[1]}">${ideaBadge}</span>` : ''}</div>
       <h4 class="idea-title">${idea.title||'Untitled'}</h4>
       <div class="idea-hook">&#128161; "${idea.hook||''}"</div>
       <div class="idea-summary">${idea.summary||''}</div>
@@ -2167,7 +2168,7 @@ function goStep(page) {
   document.getElementById('pg-'+page).style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
   if (page === 'studio') {
-    const _sl = document.getElementById('studioLbl'); if (_sl) _sl.textContent = curStyle;
+    const _sl = document.getElementById('studioLbl'); if (_sl) _sl.textContent = curStyle || 'Pilih Style';
   }
   if (page === 'videoprompt') {
     renderVpSummary();
@@ -2184,7 +2185,7 @@ function goStep(page) {
 // override old navigation
 function goLanding() { goStep('landing'); }
 function goStudio()  { 
-  const _sl = document.getElementById('studioLbl'); if (_sl) _sl.textContent = curStyle;
+  const _sl = document.getElementById('studioLbl'); if (_sl) _sl.textContent = curStyle || 'Pilih Style';
   goStep('studio'); 
 }
 
@@ -4415,7 +4416,7 @@ loadCharLibrary();
 // ══ CHARACTER SOURCE STATE ══
 let charMode = 'ref';           // 'ref' | 'custom'
 let selectedChar = null;        // { name, style, image, description }
-let customStyleSel = 'Clay Style';
+let customStyleSel = '';
 
 function switchCharMode(mode) {
   charMode = mode;
@@ -4749,7 +4750,7 @@ function pickStylePopup(el, name) {
   <div class="style-popup" id="stylePopup" onclick="event.stopPropagation()">
     <div class="style-popup-title">✦ Pilih Animation Style</div>
     <div class="style-popup-grid">
-      <div class="sp-card on" onclick="pickStylePopup(this,'Clay Style')"><div class="sc-chk">✓</div><div class="sp-ico sa-clay">🌍</div><div class="sp-lbl">Clay</div></div>
+      <div class="sp-card" onclick="pickStylePopup(this,'Clay Style')"><div class="sc-chk">✓</div><div class="sp-ico sa-clay">🌍</div><div class="sp-lbl">Clay</div></div>
       <div class="sp-card" onclick="pickStylePopup(this,'3D Pixar Style')"><div class="sc-chk">✓</div><div class="sp-ico sa-pixar">🌟</div><div class="sp-lbl">3D Pixar</div></div>
       <div class="sp-card" onclick="pickStylePopup(this,'3D Disney Style')"><div class="sc-chk">✓</div><div class="sp-ico sa-disney">✨</div><div class="sp-lbl">3D Disney</div></div>
       <div class="sp-card" onclick="pickStylePopup(this,'Felt Style')"><div class="sc-chk">✓</div><div class="sp-ico sa-felt">🧳</div><div class="sp-lbl">Felt</div></div>
