@@ -1317,6 +1317,37 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
 .btn-dl-char:hover { background: #FAE3C8; }
 
 /* Panel: custom character */
+/* Style popup overlay — hidden by default */
+.style-popup-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.style-popup-overlay.open { display: flex; }
+.style-popup {
+  background: #FBF5EA; border-radius: 18px; padding: 1.5rem;
+  max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.style-popup-title {
+  font-family: 'Playfair Display', serif; font-size: 1.1rem;
+  font-weight: 700; color: #1A1510; margin-bottom: 1rem; text-align: center;
+}
+.style-popup-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem;
+}
+.sp-card {
+  border-radius: 10px; border: 2px solid transparent; cursor: pointer;
+  background: #fff; transition: .15s; text-align: center; position: relative;
+  padding: .4rem .2rem;
+}
+.sp-card:hover { border-color: rgba(232,132,42,.4); transform: translateY(-1px); }
+.sp-card.on { border-color: #E8842A; }
+.sp-card .sc-chk { display:none; position:absolute; top:3px; right:3px; width:14px; height:14px; border-radius:50%; background:#E8842A; color:#fff; font-size:.48rem; align-items:center; justify-content:center; }
+.sp-card.on .sc-chk { display:flex; }
+.sp-ico { font-size: 1.4rem; line-height: 1; margin-bottom: .2rem; }
+.sp-lbl { font-size: .58rem; font-weight: 600; color: #3D3020; line-height: 1.2; }
+
 .style-grid-sm {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: .45rem;
   margin-bottom: .85rem;
