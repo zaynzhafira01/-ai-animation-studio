@@ -2109,9 +2109,9 @@ async function generate(){
     await new Promise(r => setTimeout(r, 350));
 
     if (topic) {
-      const genreRaw = [...sel.genre][0] || '';
-      const combined = (genreRaw + ' ' + topic).toLowerCase();
-      const matchedKey = resolveTopicKey(combined);
+      // Resolve key dari topik saja — jangan gabung dengan genre selector
+      // supaya genre "Cinematic" tidak false-match ke movie-trailer
+      const matchedKey = resolveTopicKey(topic.toLowerCase());
 
       if (matchedKey) {
         // ── Topik cocok dengan kategori database → ambil dari database dengan key yang tepat ──
