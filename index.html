@@ -1586,7 +1586,22 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
 
           <!-- PANEL: CUSTOM CHARACTER -->
           <div id="panel-custom">
-            <label class="flbl" style="margin-bottom:.5rem">&#127912; Animation Style</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+              <label class="flbl" style="margin-bottom:0">&#127912; Animation Style</label>
+              <button id="btnClearStyle" onclick="clearCustomStyle()" style="
+                display:none;
+                align-items:center;gap:5px;
+                padding:.25rem .65rem;
+                font-size:.68rem;font-weight:600;
+                color:#D45C3C;background:#FEE8E4;
+                border:1.5px solid rgba(212,92,60,.25);
+                border-radius:8px;cursor:pointer;
+                font-family:'DM Sans',sans-serif;transition:.15s;
+              "
+              onmouseover="this.style.background='#FDDAD4'"
+              onmouseout="this.style.background='#FEE8E4'"
+              >&#10005; Clear Style</button>
+            </div>
             <div class="style-grid-sm" id="styleGridCustom">
               <div class="sc-sm" onclick="pickCustomStyle(this,'Clay Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-clay">&#127758;</div><div class="sn-sm">Clay</div></div>
               <div class="sc-sm" onclick="pickCustomStyle(this,'3D Pixar Style')"><div class="sc-chk">&#10003;</div><div class="sa-sm sa-pixar">&#127775;</div><div class="sn-sm">3D Pixar</div></div>
@@ -1671,33 +1686,47 @@ async function loadDatabase() {
 function resolveTopicKey(input) {
   if (!input) return null;
   const s = input.toLowerCase();
-  const MAP = {
-    bisnis:['bisnis','business','brand','startup','entrepreneur','fashion','uang','jualan','produk','marketing','iklan','modal','investasi','saham','umkm','toko','dagang'],
-    teknologi:['teknologi','teknology','tech','ai','robot','digital','app','software','gadget','internet','coding','programmer','komputer','hp','iphone','android','cybersecurity','blockchain','crypto'],
-    lifestyle:['lifestyle','hidup','gaya','vlog','daily','wellness','gaming','gamer','fitness','olahraga','diet','kuliner','travel','wisata','fashion','style','beauty','skincare','makeup'],
-    politik:['politik','pemilu','pemerintah','dpr','hukum','negara','korupsi','partai','presiden','menteri','kebijakan','demokrasi','suara','pilkada','legislatif','kpu','nasional','rakyat'],
-    edukasi:['edukasi','belajar','sekolah','kuliah','pendidikan','tips','how to','pelajar','mahasiswa','guru','dosen','ilmu','pengetahuan','kelas','ujian','tugas','beasiswa'],
-    hiburan:['hiburan','entertainment','musik','konser','film','artis','idol','kpop','drama','sinetron','komedi','stand up','youtuber','tiktok','selebgram','viral','trending'],
-    science:['science','sains','ilmu','penelitian','ruang','alam','biologi','fisika','kimia','matematika','astronomi','planet','bumi','ekologi','lingkungan','cuaca','iklim','evolusi'],
-    fiksi:['fiksi','fantasy','sci-fi','horror','romance','misteri','dongeng','animasi','kartun','komik','manga','superhero','petualangan','sihir','naga','alien','dystopia','thriller'],
-    'movie-trailer':['movie trailer','trailer','film','sinema','bioskop','cinematic','short film','indie','produksi film'],
+
+  // movie-trailer dicek PERTAMA karena 'trailer' mengandung substring 'ai' (teknologi)
+  // Gunakan word-boundary check: spasi di sekitar kata atau di awal/akhir string
+  const wordMatch = (str, word) => {
+    const re = new RegExp('(^|[\\s,])' + word.replace(/[-\/]/g,'[-\\/]') + '([\\s,]|$)');
+    return re.test(str);
   };
+  if (wordMatch(s,'trailer') || s.includes('movie trailer') || s.includes('sinema') ||
+      s.includes('bioskop') || wordMatch(s,'cinematic') || s.includes('short film') ||
+      s.includes('produksi film')) return 'movie-trailer';
+
+  const MAP = {
+    bisnis:['bisnis','business','brand','startup','entrepreneur','uang','jualan','produk','marketing','iklan','modal','investasi','saham','umkm','toko','dagang'],
+    teknologi:['teknologi','teknology','tech','robot','digital','app','software','gadget','internet','coding','programmer','komputer','cybersecurity','blockchain','crypto'],
+    lifestyle:['lifestyle','hidup','gaya','vlog','daily','wellness','gaming','gamer','fitness','olahraga','diet','kuliner','travel','wisata','style','beauty','skincare','makeup'],
+    politik:['politik','pemilu','pemerintah','dpr','hukum','negara','korupsi','partai','presiden','menteri','kebijakan','demokrasi','suara','pilkada','legislatif','kpu','nasional','rakyat'],
+    edukasi:['edukasi','belajar','sekolah','kuliah','pendidikan','tips','pelajar','mahasiswa','guru','dosen','ilmu','pengetahuan','kelas','ujian','tugas','beasiswa'],
+    hiburan:['hiburan','entertainment','musik','konser','artis','idol','kpop','drama','sinetron','komedi','youtuber','tiktok','selebgram','viral','trending'],
+    science:['science','sains','penelitian','ruang','alam','biologi','fisika','kimia','matematika','astronomi','planet','bumi','ekologi','lingkungan','cuaca','iklim','evolusi'],
+    fiksi:['fiksi','fantasy','sci-fi','horror','romance','misteri','dongeng','animasi','kartun','komik','manga','superhero','petualangan','sihir','naga','alien','dystopia','thriller'],
+  };
+  // Untuk sisa kategori, tambahkan juga word-boundary untuk 'ai' agar tidak false-match
   for (const [key, kws] of Object.entries(MAP)) {
-    if (kws.some(kw => s.includes(kw))) return key;
+    if (kws.some(kw => {
+      // keyword pendek (<=2 char) pakai word boundary, sisanya substring biasa
+      return kw.length <= 2 ? wordMatch(s, kw) : s.includes(kw);
+    })) return key;
   }
   return null;
 }
 
 // ── Ambil N ide dari database berdasarkan topik/genre ──
-async function getDbIdeas(count = 5) {
+async function getDbIdeas(count = 5, forcedKey = null) {
   const db = await loadDatabase();
   const genreRaw = [...sel.genre][0] || '';
   const topic = document.getElementById('f_topic').value.trim();
-  const combined = (genreRaw + ' ' + topic).toLowerCase();
 
   let pool = null;
   if (db && db.topics) {
-    const key = resolveTopicKey(combined);
+    // Kalau forcedKey disuplai, pakai langsung tanpa resolve ulang
+    const key = forcedKey || resolveTopicKey((genreRaw + ' ' + topic).toLowerCase());
     if (key && db.topics[key]) {
       pool = db.topics[key];
     } else {
@@ -1913,18 +1942,21 @@ function syncAllStylePickers(name) {
   if (sl) sl.textContent = name || 'Pilih Style';
   // sync landing page scards
   document.querySelectorAll('.scard').forEach(c => {
-    c.classList.toggle('on', c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
+    c.classList.toggle('on', !!name && c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
   });
   // sync storyboard style grid
   const sbGrid = document.getElementById('sbStyleGrid');
   if (sbGrid) sbGrid.querySelectorAll('.sc-sm').forEach(c => {
-    c.classList.toggle('on', c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
+    c.classList.toggle('on', !!name && c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
   });
   // sync character builder style grid
   const cbGrid = document.getElementById('styleGridCustom');
   if (cbGrid) cbGrid.querySelectorAll('.sc-sm').forEach(c => {
-    c.classList.toggle('on', c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
+    c.classList.toggle('on', !!name && c.getAttribute('onclick') && c.getAttribute('onclick').includes("'"+name+"'"));
   });
+  // sync clear button visibility
+  const clearBtn = document.getElementById('btnClearStyle');
+  if (clearBtn) clearBtn.style.display = name ? 'flex' : 'none';
 }
 
 function tog(el,group){
@@ -1984,55 +2016,85 @@ function onTopicInput() {
 
 // ── Build 1 complete idea locally from user's typed topic + chip selections ──
 function buildLocalIdea() {
+  return buildLocalIdeaVariants(1);
+}
+
+// ── Generate N variasi berbeda dari topik user (masing-masing template unik) ──
+function buildLocalIdeaVariants(count = 5) {
   const topic = document.getElementById('f_topic').value.trim();
   const s = curStyle;
-  const m = [...sel.mood][0] || 'Dreamy';
   const genreRaw = [...sel.genre][0] || 'Cinematic';
   const genre = genreRaw.replace(/^[^a-zA-Z]+/, '').trim();
-  const type = [...sel.type].join(', ') || 'Cinematic';
+  const type = [...sel.type].join(', ') || 'Short Video';
   const aud = [...sel.aud].join(', ') || 'Dewasa';
   const dur = [...sel.dur][0] || '30 detik';
   const plat = [...sel.plat].join(', ') || 'TikTok';
   const rat = [...sel.rat][0] || '9:16';
 
-  // Mood-based hook template
-  const hookTemplates = {
-    'Dreamy':     `Sebuah cerita penuh imajinasi tentang: ${topic}`,
-    'Dramatic':   `Momen paling dramatis dalam hidup selalu dimulai dari hal kecil — seperti ${topic}`,
-    'Funny':      `Tidak ada yang menyangka ${topic} bisa berakhir seperti ini`,
-    'Epic':       `Dalam dunia yang lupa akan keajaiban, ${topic} mengubah segalanya`,
-    'Dark':       `Ada yang salah dengan ${topic} — dan semua orang memilih untuk diam`,
-    'Romantic':   `Cinta paling tulus datang tanpa rencana, tepat seperti saat ${topic}`,
-    'Nostalgic':  `Beberapa hal tidak pernah terlupakan — ${topic} adalah salah satunya`,
-    'Mysterious': `Tidak ada yang tahu dari mana ${topic} berasal. Atau ke mana ia akan pergi.`,
-    'Hopeful':    `Bahkan di hari tergelap, ${topic} bisa menjadi cahaya`,
-    'Tense':      `Semuanya bergantung pada satu keputusan — dan ${topic} adalah ujiannya`,
-  };
-  const hook = hookTemplates[m] || `Kisah tentang ${topic} yang tidak akan kamu lupakan`;
+  // 5 template angle berbeda — masing-masing punya framing, mood, visual, dan hook unik
+  const VARIANTS = [
+    {
+      angle: 'Origin Story',
+      mood: 'Nostalgic',
+      titleFn: t => `Awal Mula: ${t}`,
+      hookFn:  t => `Semua orang tahu hasilnya — tapi tidak ada yang tahu bagaimana "${t}" benar-benar dimulai.`,
+      visualFn: t => `Flashback sequence dari titik awal, warna desaturated hangat, voice-over intim, close-up detail kecil yang bermakna besar dalam "${t}".`,
+      summaryFn: (t, g, style, a, d, p, r) => `${g} video bergaya ${style} mengangkat sisi origin dari "${t}". Untuk audiens ${a}, mood nostalgia, ${d}, optimal di ${p} (${r}).`,
+      recFn:   (style, p, r) => `${style} dengan nostalgic atmosphere — story-driven content, cocok untuk engagement tinggi di ${p}. Aspect ratio ${r}.`,
+      tags:    () => [s, genre, 'Nostalgic', 'Origin']
+    },
+    {
+      angle: 'Twist Ending',
+      mood: 'Mysterious',
+      titleFn: t => `Siapa Sangka: ${t}`,
+      hookFn:  t => `Kamu pikir kamu tahu ke mana cerita ini menuju — sampai "${t}" membalik segalanya di detik terakhir.`,
+      visualFn: t => `Build-up tenang dengan misdirection visual, cut cepat saat twist, zoom dramatis ke ekspresi karakter saat realita "${t}" terungkap.`,
+      summaryFn: (t, g, style, a, d, p, r) => `${g} video bergaya ${style} dengan struktur twist ending berbasis "${t}". Untuk audiens ${a}, mood misterius, ${d}, optimal di ${p} (${r}).`,
+      recFn:   (style, p, r) => `${style} dengan mysterious atmosphere — high-retention structure, ideal untuk watch-through di ${p}. Aspect ratio ${r}.`,
+      tags:    () => [s, genre, 'Mysterious', 'Twist']
+    },
+    {
+      angle: 'Character Study',
+      mood: 'Emotional',
+      titleFn: t => `Di Balik: ${t}`,
+      hookFn:  t => `Bukan tentang peristiwanya — tapi tentang orang yang merasakannya. Ini kisah nyata di balik "${t}".`,
+      visualFn: t => `Extreme close-up ekspresi, handheld mengikuti karakter, interior monolog voice-over, silence lebih berbicara dari dialog dalam konteks "${t}".`,
+      summaryFn: (t, g, style, a, d, p, r) => `${g} video bergaya ${style} fokus pada dimensi karakter dari "${t}". Untuk audiens ${a}, mood emosional, ${d}, optimal di ${p} (${r}).`,
+      recFn:   (style, p, r) => `${style} dengan emotional atmosphere — karakter-driven, cocok untuk koneksi audiens dalam di ${p}. Aspect ratio ${r}.`,
+      tags:    () => [s, genre, 'Emotional', 'Character']
+    },
+    {
+      angle: 'Time Montage',
+      mood: 'Epic',
+      titleFn: t => `Perjalanan: ${t}`,
+      hookFn:  t => `Dari titik nol sampai puncaknya — "${t}" dalam satu perjalanan epik yang tidak bisa kamu lewatkan.`,
+      visualFn: t => `Montase time-lapse dan jump cut ritmis, musik crescendo, transisi match-cut antar era, wide shot skala besar untuk momen klimaks "${t}".`,
+      summaryFn: (t, g, style, a, d, p, r) => `${g} video bergaya ${style} dengan struktur time-montage mengeksplorasi "${t}". Untuk audiens ${a}, mood epic, ${d}, optimal di ${p} (${r}).`,
+      recFn:   (style, p, r) => `${style} dengan epic atmosphere — high-energy pacing, sangat shareable di ${p}. Aspect ratio ${r}.`,
+      tags:    () => [s, genre, 'Epic', 'Montage']
+    },
+    {
+      angle: 'POV Immersive',
+      mood: 'Dreamy',
+      titleFn: t => `Rasakan: ${t}`,
+      hookFn:  t => `Dan tiba-tiba kamu ada di sana — benar-benar merasakannya. Inilah "${t}" dari sudut pandang orang pertama.`,
+      visualFn: t => `Full POV shot dari mata karakter, spatial audio, slow-motion detail sensorik, lingkungan "${t}" terasa nyata dan hadir secara penuh.`,
+      summaryFn: (t, g, style, a, d, p, r) => `${g} video bergaya ${style} dengan pendekatan POV immersive untuk "${t}". Untuk audiens ${a}, mood dreamy, ${d}, optimal di ${p} (${r}).`,
+      recFn:   (style, p, r) => `${style} dengan dreamy atmosphere — immersive first-person experience, tinggi repeat-watch value di ${p}. Aspect ratio ${r}.`,
+      tags:    () => [s, genre, 'Dreamy', 'POV']
+    }
+  ];
 
-  // Genre-based visual direction
-  const visualTemplates = {
-    'Cinematic':    `Establishing wide shot tentang "${topic}", sinematik dengan depth of field, lalu close-up detail emosional, slow-motion reveal.`,
-    'Romance':      `Dua perspektif yang bersilangan, shot tangan saling berdekatan, latar bokeh warm light dalam konteks "${topic}".`,
-    'Comedy':       `Timing komedi dengan reaction shots berlebihan, Dutch angle untuk chaos, speed lines saat ${topic} muncul.`,
-    'Drama':        `Extreme close-up wajah penuh emosi, silence yang terasa berat, reveal perlahan dari "${topic}".`,
-    'Fantasy':      `Particle effects ajaib menyertai "${topic}", world-building establishing shot, magical transformation sequence.`,
-    'Sci-Fi':       `Futuristic environment framing "${topic}", data visualization overlay, wide shot skala epik.`,
-    'Horror':       `Shadow approach ke "${topic}", jump cut ke reveal, suasana senyap sebelum klimaks.`,
-    'Action':       `Tracking shot cepat, slow-motion momen puncak terkait "${topic}", kinetic energy sepanjang scene.`,
-    'Mystery':      `Fragmentasi visual, clue tersembunyi di setiap shot, "${topic}" terungkap sedikit demi sedikit.`,
-    'Documentary':  `Handheld intimacy, natural light, testimoni dengan b-roll "${topic}" yang autentik.`,
-  };
-  const visual = visualTemplates[genre] || `Opening shot tentang "${topic}", visual ${s}, mood ${m}, rasio ${rat}.`;
+  const selected = VARIANTS.slice(0, Math.min(count, VARIANTS.length));
 
-  return [{
-    title: topic,
-    hook,
-    summary: `${genre} video bergaya ${s} tentang "${topic}". Dibuat untuk audiens ${aud} dengan mood ${m}, durasi ${dur}, optimal di ${plat} (${rat}).`,
-    visual_direction: visual,
-    style_recommendation: `${s} dengan ${m.toLowerCase()} atmosphere — cocok untuk ${type} content di ${plat}. Aspect ratio ${rat} untuk tampilan optimal.`,
-    tags: [genre, m, plat.split(',')[0].trim()]
-  }];
+  return selected.map(v => ({
+    title: v.titleFn(topic),
+    hook:  v.hookFn(topic),
+    summary: v.summaryFn(topic, genre, s, aud, dur, plat, rat),
+    visual_direction: v.visualFn(topic),
+    style_recommendation: v.recFn(s, plat, rat),
+    tags: v.tags()
+  }));
 }
 
 async function generate(){
@@ -2044,19 +2106,34 @@ async function generate(){
   panel.innerHTML = '<div class="out-empty"><div style="font-size:2rem;animation:blink2 .8s ease infinite">&#10022;</div><div class="oe-title" style="margin-top:.5rem">Menyusun ide kamu...</div><div class="oe-sub">Mengambil dari database &#10024;</div></div>';
 
   try {
-    // ── Kalau user ketik topik → 1 custom + 4 dari database ──
+    await new Promise(r => setTimeout(r, 350));
+
     if (topic) {
-      await new Promise(r => setTimeout(r, 350));
-      const customIdea = buildLocalIdea()[0];
-      const dbIdeas = await getDbIdeas(4);
-      const pool4 = dbIdeas || getPoolIdeas(4);
-      renderIdeas([customIdea, ...pool4]);
-      toast('&#10022; 5 ide siap — 1 custom + 4 dari database!');
+      const genreRaw = [...sel.genre][0] || '';
+      const combined = (genreRaw + ' ' + topic).toLowerCase();
+      const matchedKey = resolveTopicKey(combined);
+
+      if (matchedKey) {
+        // ── Topik cocok dengan kategori database → ambil dari database dengan key yang tepat ──
+        const dbIdeas = await getDbIdeas(5, matchedKey);
+        if (dbIdeas && dbIdeas.length) {
+          renderIdeas(dbIdeas);
+          toast('&#10022; 5 ide dari database siap!');
+        } else {
+          const ideas = getPoolIdeas(5);
+          renderIdeas(ideas);
+          toast('&#10022; 5 ide siap!');
+        }
+      } else {
+        // ── Topik bebas/custom → 5 variasi angle berbeda dari ide user ──
+        const variants = buildLocalIdeaVariants(5);
+        renderIdeas(variants);
+        toast('&#10022; 5 variasi ide dari topikmu siap!');
+      }
       return;
     }
 
-    // ── Tidak ada topik → ambil 5 dari database (by genre/topik) ──
-    await new Promise(r => setTimeout(r, 350));
+    // ── Tidak ada topik → ambil 5 dari database (by genre) ──
     const dbIdeas = await getDbIdeas(5);
     if (dbIdeas && dbIdeas.length) {
       renderIdeas(dbIdeas);
@@ -2212,7 +2289,12 @@ function buildSbPrompt() {
 
   const action = actionRaw;
   const expr   = exprRaw;
-  const charContext = '';
+
+  // ── Custom character injection ──
+  const customCharDesc = buildCustomCharDescription();
+  const charContext = customCharDesc
+    ? `\nCharacter Design: ${customCharDesc}`
+    : '';
 
   // 1 sheet per 10 seconds
   const seconds = parseInt(dur) || 30;
@@ -2286,6 +2368,12 @@ async function mockStoryboard() {
   const storyCtx  = summary || title;
   const visualHint = (visual || title).split(',')[0].trim();
 
+  // ── Custom character injection ──
+  const customCharDesc = buildCustomCharDescription();
+  const charStyleVfxOverride = customCharDesc
+    ? `custom character (${customCharDesc})`
+    : null;
+
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const pickN = (arr, n) => { const s=[...arr].sort(()=>Math.random()-.5); return s.slice(0,n); };
 
@@ -2303,6 +2391,11 @@ async function mockStoryboard() {
     'Cartoon Style': { mat:'thick ink outline on flat colour fill with crosshatch shadow', light:'graphic cartoon lighting with hard shadow shapes and pop-art highlight', env:'exaggerated cartoon world with wobbly horizon lines and sight-gag props', char:'stretchy rubber-hose cartoon character with big mouth and bouncy movement', fx:'cartoon impact stars, motion arc squiggles and comedic dust cloud puff' },
   };
   const styleVfx = STYLE_DB[style] || STYLE_DB['Kawaii Style'];
+
+  // Override the char descriptor with custom character detail if provided
+  if (charStyleVfxOverride) {
+    styleVfx.char = charStyleVfxOverride;
+  }
 
   // ── Mood-specific atmosphere & colour ──
   const MOOD_DB = {
@@ -2442,6 +2535,167 @@ async function mockStoryboard() {
     'particle burst dissolve — ${styleVfx.fx} filling frame before clearing to next scene',
   ];
 
+  // ── Detect movie trailer mode ──
+  const isMovieTrailer = (() => {
+    const topicVal = document.getElementById('f_topic').value.toLowerCase();
+    const ideaTags = (selectedIdea?.tags || []).join(' ').toLowerCase();
+    const ideaTitle = (selectedIdea?.title || '').toLowerCase();
+    const ideaSummary = (selectedIdea?.summary || '').toLowerCase();
+    return topicVal.includes('trailer') || topicVal.includes('movie') ||
+           ideaTags.includes('trailer') || ideaTags.includes('epik') || ideaTags.includes('epic') ||
+           ideaSummary.includes('trailer') ||
+           resolveTopicKey(topicVal) === 'movie-trailer' ||
+           (selectedIdea && TOPICS_DB['movie-trailer'] && TOPICS_DB['movie-trailer'].some(t => t.title === selectedIdea.title));
+  })();
+
+  if (isMovieTrailer) {
+    // ════════════════════════════════════════════════════
+    // MOVIE TRAILER MODE — authentic trailer panel DNA
+    // ════════════════════════════════════════════════════
+
+    // Trailer-specific panel pools — each type is distinct cinematic language
+    const TRAILER_COLD_OPEN = [
+      `extreme close-up of a single story-critical detail — "${visualHint}" filling frame before any context is given, ${styleVfx.mat} texture, complete mystery`,
+      `black screen holds 2 seconds — then a single ambient sound, then a wide establishing shot of "${title}" world reveals itself in silence`,
+      `mid-action smash-cut cold open — "${storyCtx}" already in progress, no exposition, audience dropped into chaos`,
+      `time-lapse of a world at peace — then a single anomaly appears in "${visualHint}", freeze-frame, hard cut to black`,
+      `handheld intimate shot of protagonist's face — unguarded, looking at something off-screen, expression shifts from calm to alarm at "${title}"`,
+    ];
+
+    const TRAILER_TONE_SET = [
+      `slow push-in on a vast environment — orchestral swell begins, scale of "${title}" world revealed, ${moodVfx.color} palette locked in`,
+      `montage of normal life — then one wrong detail in "${visualHint}" that changes everything, music shifts register`,
+      `voice-over moment — single line of dialogue over black screen, then cut to wide shot of "${storyCtx}" consequence`,
+      `title card over black — one key word of "${title}" burning onto screen, held, then wiped`,
+      `intercutting between beauty and threat — establishing the duality at the heart of "${storyCtx}"`,
+    ];
+
+    const TRAILER_ESCALATION = [
+      `rapid 3-cut montage — action → reaction → consequence of "${title}", each cut shorter than the last`,
+      `tracking shot building momentum — protagonist moving through "${styleVfx.env}" with increasing urgency, music entering percussion`,
+      `parallel editing — two events happening simultaneously in "${storyCtx}", converging threat visualized`,
+      `Dutch angle extreme — world of "${title}" literally tilting, architecture and gravity expressing the moral stakes`,
+      `push-in to extreme close-up of eyes — whites showing, pupils contracted, "${storyCtx}" reflected in the iris`,
+      `crowd reaction shot — scale of consequence in "${title}" registered on dozens of faces simultaneously`,
+    ];
+
+    const TRAILER_MONEY_SHOT = [
+      `full-frame spectacle shot — the single most visually ambitious image of "${title}", held for 3 beats, ${styleVfx.fx} at maximum`,
+      `hero silhouette against impossible backdrop — ${styleVfx.char} tiny against enormous stakes of "${storyCtx}", ${moodVfx.color} sky`,
+      `slow-motion impact — the pivotal physical moment of "${title}" in hyper-slow motion, every particle frozen`,
+      `360-degree orbit around decisive action — camera circling the single most important moment in "${storyCtx}"`,
+      `visual metaphor shot — abstract image that perfectly encapsulates the theme of "${title}" without a single word`,
+    ];
+
+    const TRAILER_DIALOGUE_STING = [
+      `black screen — single line of dialogue: hook "${hook}", letter-by-letter reveal, devastating and short`,
+      `two-shot confrontation — faces close, the question at the heart of "${storyCtx}" hanging in the air between them`,
+      `voice-over black frame — protagonist narrates the cost of "${title}" over absolute silence`,
+      `reaction tight shot — character hearing news about "${storyCtx}", face doing the entire story`,
+      `question title card — one unanswerable question posed by "${title}" burned onto screen`,
+    ];
+
+    const TRAILER_RAPID_FIRE = [
+      `5-shot rapid cut montage — "${title}" highlights: wide → medium → CU → action → reaction, 2 seconds each`,
+      `percussion-synced quick cuts — each beat of "${storyCtx}" music lands on a new image, 8–10 images in 6 seconds`,
+      `split-second teases — micro-glimpses of "${title}" revelations, each too fast to fully read, building hunger`,
+      `intercut chaos montage — environments, faces, actions all from "${storyCtx}", escalating, no dialogue`,
+      `oner fake-out — one long shot appears, then hard jump-cuts reveal it was a trap, "${title}" misdirect`,
+    ];
+
+    const TRAILER_TITLE_CARD = [
+      `black screen — film title of "${title}" assembles from fragments, dramatic weight, then holds`,
+      `logo reveal over final image — "${title}" studio branding burns in over the most haunting image`,
+      `title over extreme wide — "${title}" text small over an enormous environment shot, scale statement`,
+      `tagline card — one line that reframes everything about "${storyCtx}", white on black, minimal`,
+    ];
+
+    const TRAILER_FINAL_STING = [
+      `post-title extra beat — scene after the title card shows one more unexpected detail of "${title}", audience leans forward`,
+      `hard cut to black after peak action — sudden silence, then the title, the impact of "${storyCtx}" hanging`,
+      `whisper over black — a single voice says something about "${title}" that recontextualizes the entire trailer`,
+      `freeze-frame final image — the most iconic single frame of "${storyCtx}", held as title fades in`,
+    ];
+
+    // Trailer-specific segment structure (acts of a real trailer)
+    const TRAILER_ACTS = [
+      { name: 'COLD OPEN',    pool: TRAILER_COLD_OPEN },
+      { name: 'TONE SET',     pool: TRAILER_TONE_SET },
+      { name: 'ESCALATION',   pool: TRAILER_ESCALATION },
+      { name: 'MONEY SHOT',   pool: TRAILER_MONEY_SHOT },
+      { name: 'RAPID FIRE',   pool: TRAILER_RAPID_FIRE },
+      { name: 'TITLE CARD',   pool: TRAILER_TITLE_CARD },
+    ];
+
+    const sheets = [];
+    for (let i = 0; i < sheetCount; i++) {
+      const seg = `${i*10}–${(i+1)*10}s`;
+      const isLast = i === sheetCount - 1;
+      const actIndex = Math.min(i, TRAILER_ACTS.length - 1);
+      const act = TRAILER_ACTS[actIndex];
+      const lighting = pick(LIGHTING);
+
+      // Build trailer-authentic 10-panel layout
+      const panelLines = [];
+
+      if (i === 0) {
+        // Act 1: Cold open — mystery, hook, first impression
+        panelLines.push(`panel 1 [COLD OPEN] ${pick(TRAILER_COLD_OPEN)}`);
+        panelLines.push(`panel 2 [BLACK + SOUND] black frame — ambient audio of "${visualHint}" begins, atmosphere sets before visuals`);
+        panelLines.push(`panel 3 [WORLD REVEAL] slow wide pull-back — ${styleVfx.env} establishing shot, world of "${title}" in full, ${moodVfx.color}`);
+        panelLines.push(`panel 4 [PROTAGONIST] first glimpse of main character — backlit or partial, identity withheld, ${styleVfx.char}`);
+        panelLines.push(`panel 5 [TONE SET] ${pick(TRAILER_TONE_SET)}`);
+        panelLines.push(`panel 6 [INCITING IMAGE] the single visual that tells you what "${title}" is about — no dialogue needed`);
+        panelLines.push(`panel 7 [MOOD LOCK] ${moodVfx.atmo} fills frame — ${moodVfx.color}, ${styleVfx.light}, the feeling is now irreversible`);
+        panelLines.push(`panel 8 [HOOK LINE] title-card style text frame — hook: "${hook}", white on black, searing`);
+        panelLines.push(`panel 9 [FIRST CUT] smash cut to action — first kinetic beat, establishing ${moodVfx.energy}`);
+        panelLines.push(`panel 10 [HARD STOP] sudden silence — black frame, music cuts, anticipation maximum`);
+
+      } else if (i === sheetCount - 1) {
+        // Final act: Rapid fire + title card
+        panelLines.push(`panel 1 [RAPID FIRE START] ${pick(TRAILER_RAPID_FIRE)}`);
+        panelLines.push(`panel 2 [PERCUSSION CUT 1] beat-synced: "${title}" key visual 1, ${styleVfx.fx}`);
+        panelLines.push(`panel 3 [PERCUSSION CUT 2] beat-synced: "${storyCtx}" action peak, ${moodVfx.energy}`);
+        panelLines.push(`panel 4 [PERCUSSION CUT 3] beat-synced: face reaction — emotion raw, ${styleVfx.char}`);
+        panelLines.push(`panel 5 [MONEY SHOT] ${pick(TRAILER_MONEY_SHOT)}, full spectacle, hold 3 beats`);
+        panelLines.push(`panel 6 [DIALOGUE STING] ${pick(TRAILER_DIALOGUE_STING)}`);
+        panelLines.push(`panel 7 [PERCUSSION CLIMAX] fastest cut sequence — 1-second images, "${title}" intensity peak`);
+        panelLines.push(`panel 8 [TITLE CARD] ${pick(TRAILER_TITLE_CARD)}`);
+        panelLines.push(`panel 9 [FINAL STING] ${pick(TRAILER_FINAL_STING)}`);
+        panelLines.push(`panel 10 [RELEASE DATE / LOGO] release title, studio badge, black — "${title}" complete`);
+
+      } else {
+        // Middle acts: Escalation + money shots
+        panelLines.push(`panel 1 [${act.name}] ${pick(act.pool)}`);
+        panelLines.push(`panel 2 [ESCALATION] ${pick(TRAILER_ESCALATION)}`);
+        panelLines.push(`panel 3 [REACTION CU] extreme close-up — ${styleVfx.char} registering "${storyCtx}" stakes, micro-expression peak`);
+        panelLines.push(`panel 4 [ACTION BEAT] kinetic action panel — ${moodVfx.energy}, ${styleVfx.fx} bursting`);
+        panelLines.push(`panel 5 [ENVIRONMENT] wide environmental chaos — "${title}" world expressing maximum tension, ${lighting}`);
+        panelLines.push(`panel 6 [DIALOGUE TEASE] ${pick(TRAILER_DIALOGUE_STING)}`);
+        panelLines.push(`panel 7 [PARALLEL CUT] two simultaneous events in "${storyCtx}" — parallel editing, convergence imminent`);
+        panelLines.push(`panel 8 [MONEY SHOT] ${pick(TRAILER_MONEY_SHOT)}`);
+        panelLines.push(`panel 9 [RAPID CUT] ${pick(TRAILER_RAPID_FIRE)}`);
+        panelLines.push(`panel 10 [ACT BREAK] black frame with single audio sting — "${title}" beat lands, pregnant pause`);
+      }
+
+      sheets.push({
+        segment: seg,
+        prompt:
+          `MOVIE TRAILER storyboard sheet, 10-panel cinematic trailer sequence, ${style} animation style, ` +
+          `film: "${title}"${hook ? `, tagline: "${hook}"` : ''}, ` +
+          (customCharDesc ? `character: ${customCharDesc}, ` : '') +
+          panelLines.join(', ') + ', ' +
+          `trailer pacing: rapid cuts mixed with held beats, ${moodVfx.atmo}, ${moodVfx.color} palette, ` +
+          `${styleVfx.mat} material quality, cinematic aspect ratio, professional film trailer storyboard, ` +
+          `each panel labeled with act function, dramatic typography for any text panels, studio-quality production`
+      });
+    }
+    return sheets;
+  }
+
+  // ════════════════════════════════════════════════════
+  // STANDARD STORY MODE (non-trailer)
+  // ════════════════════════════════════════════════════
   const sheets = [];
   for (let i = 0; i < sheetCount; i++) {
     const seg       = `${i*10}–${(i+1)*10}s`;
@@ -2483,6 +2737,7 @@ async function mockStoryboard() {
       prompt:
         `cinematic storyboard sheet, 10-panel storyboard, ${style} animation style, ` +
         `story: "${title}"${hook ? `, hook: "${hook}"` : ''}, ` +
+        (customCharDesc ? `character: ${customCharDesc}, ` : '') +
         panelLines.join(', ') + ', ' +
         `seamless visual continuity across all 10 panels, ${moodVfx.atmo} throughout, ` +
         `${styleVfx.mat} material quality, ${lighting}, ` +
@@ -2915,6 +3170,9 @@ function mockVideoPrompts(sheets, platforms) {
   const summary   = selectedIdea?.summary || '';
   const storyCtx  = summary || title;
 
+  // ── Custom character injection ──
+  const customCharDesc = buildCustomCharDescription();
+
   const pick  = arr => arr[Math.floor(Math.random() * arr.length)];
   const pickN = (arr, n) => [...arr].sort(()=>Math.random()-.5).slice(0,n);
 
@@ -2932,6 +3190,11 @@ function mockVideoPrompts(sheets, platforms) {
     'Cartoon Style': { render:'classic cartoon 2D animation quality', surface:'thick ink outline on flat colour fill with graphic shadow shape', motion:'rubber-hose bounce physics, cartoon smear-frame on fast action', light:'graphic cartoon lighting with hard shadow pop and highlight shape' },
   };
   const sv = STYLE_VID[style] || STYLE_VID['Kawaii Style'];
+
+  // Override character/subject description with custom character if provided
+  const charSubject = customCharDesc
+    ? `${customCharDesc} rendered in ${sv.render} quality`
+    : `${sv.surface} character`;
 
   // ── Mood-specific video descriptors ──
   const MOOD_VID = {
@@ -3085,7 +3348,7 @@ function mockVideoPrompts(sheets, platforms) {
           `The sequence ${narrative}. ` +
           `A ${pick(cams)} moves through a ${sv.surface} environment rendered in full ${style} fidelity. ` +
           `${mv.energy.charAt(0).toUpperCase()+mv.energy.slice(1)} fills every frame as the ${mv.color} palette wraps the world. ` +
-          `${sv.motion} gives the characters physical truth. ` +
+          `${sv.motion} gives the ${charSubject} physical truth. ` +
           `Lighting: ${lights[0]}, shifting to ${lights[1]} at the emotional peak. ` +
           `${audio !== 'None' ? 'Audio: ' + sound + '.' : 'No dialogue — visual storytelling only.'} ` +
           `Story: "${storyCtx}". Aspect ratio ${ratio}. ` +
@@ -3095,7 +3358,7 @@ function mockVideoPrompts(sheets, platforms) {
 
       if (pkey === 'kling') {
         return `[${actLabel} — ${seg}] ${style} animated sequence that ${narrative}\n` +
-          `Subject: ${sv.surface} character in ${sv.render} quality\n` +
+          `Subject: ${charSubject}\n` +
           `Camera: ${pick(cams)}, ${intensity} motion, ${pace} pacing\n` +
           `Environment: ${sv.motion}, ${mv.color} palette, ${lights[0]}\n` +
           `Mood: ${mood} — ${mv.energy}\n` +
@@ -3109,7 +3372,7 @@ function mockVideoPrompts(sheets, platforms) {
         return `${pick(cams).split('—')[0].trim()} through ${style} world (${seg} — ${actLabel}): ` +
           `${narrative}. ` +
           `${pace} pacing, ${intensity} motion, ${mv.color} atmosphere. ` +
-          `${sv.render}, ${sv.surface} surface quality, ${lights[0]}. ` +
+          `${sv.render}, ${charSubject}, ${lights[0]}. ` +
           `${audio !== 'None' ? sound + ' audio.' : ''} ` +
           `${ratio}. ${isLast ? 'Final close.' : 'Seamless cut to next.'}\n\n` +
           `SHOT LIST:\n${shotBlock}`;
@@ -3129,7 +3392,7 @@ function mockVideoPrompts(sheets, platforms) {
           `A cinematic ${sv.render} sequence that ${narrative}. ` +
           `The camera performs ${pick(cams)} with ${intensity} energy across this full 10-second clip. ` +
           `The world is rendered in ${sv.surface} — every detail faithful to ${style} aesthetic. ` +
-          `${sv.motion} brings the characters to life with physical authenticity. ` +
+          `${sv.motion} brings ${charSubject} to life with physical authenticity. ` +
           `Lighting transitions from ${lights[0]} to ${lights[1]}, with ${lights[2]} adding depth. ` +
           `The ${mv.color} palette carries emotional weight throughout. ` +
           `${mv.energy.charAt(0).toUpperCase()+mv.energy.slice(1)} drives the scene's internal rhythm. ` +
@@ -3142,10 +3405,11 @@ function mockVideoPrompts(sheets, platforms) {
       // universal
       return `${style} cinematic animation — ${actLabel} (${seg})\n` +
         `Story: ${narrative}\n` +
+        `Character: ${charSubject}\n` +
         `Camera: ${pick(cams)} · Motion: ${intensity} · Pace: ${pace}\n` +
         `Lighting: ${lights[0]}, ${lights[1]}\n` +
         `Palette: ${mv.color} · Mood: ${mv.energy}\n` +
-        `Render: ${sv.render} · Surface: ${sv.surface}\n` +
+        `Render: ${sv.render}\n` +
         `${audio !== 'None' ? 'Audio: ' + sound : 'No audio cues'} · Ratio: ${ratio}\n` +
         `${isLast ? 'FINAL SEGMENT — full resolution.' : `Segment ${i+1}/${totalSegs} — continues.`}\n\n` +
         `SHOT BREAKDOWN:\n${shotBlock}`;
@@ -3169,6 +3433,9 @@ function buildShortVideoSegments(sheets) {
   const dur     = [...sel.dur][0]   || '30 detik';
   const durSec  = parseInt(dur) || 30;
   const totalSegs = sheets.length;
+
+  // ── Custom character injection ──
+  const customCharDesc = buildCustomCharDescription();
 
   // ── Shot types ──
   const SHOT_TYPES  = ['ECU (extreme close-up)', 'CU (close-up)', 'MCU (medium close-up)', 'MS (medium shot)', 'WS (wide shot)', 'POV (point of view)', 'OTS (over the shoulder)', 'tracking shot', 'handheld shot'];
@@ -3308,13 +3575,14 @@ function buildShortVideoSegments(sheets) {
 
     // ── Build the plain-text prompt (for copy/export) ──
     const segSuffix = totalSegs > 1 ? ` — Part ${segIdx + 1}/${totalSegs}` : '';
+    const charBlock = customCharDesc ? `\nCHARACTER: ${customCharDesc}\n` : '';
     const plainText =
 `TITLE: "${title}${segSuffix}"
 
 FORMAT: ${ratio}, ${durSec}s total${totalSegs > 1 ? ` | Segment ${segIdx + 1}/${totalSegs}: ${tStart}s–${tEnd}s` : ''}, ultra-fast cinematic pacing, seamless quick cuts animation, no text overlay.
 
 STYLE: ${style} | expressive face | polished materials | cinematic lighting | exaggerated but believable motion | subtle motion blur | dynamic camera.
-
+${charBlock}
 MOOD: ${moodArc}
 
 ENVIRONMENT FLOW: ${envFlow}
@@ -3337,7 +3605,8 @@ EDITING STYLE: Seamless quick cuts · Action-matched transitions · Occasional w
       shots:    shots,
       meta: {
         title, style, mood, ratio, durSec, tStart, tEnd, actLabel,
-        envFlow, moodArc, highlightNote, segIdx, totalSegs, segSuffix
+        envFlow, moodArc, highlightNote, segIdx, totalSegs, segSuffix,
+        customCharDesc: customCharDesc || null
       }
     });
   });
@@ -3388,6 +3657,7 @@ function renderShortVideoCard(item, i) {
         <div class="sv-field"><span class="sv-key">TITLE</span><span class="sv-val">"${escapeHtml(m.title)}${escapeHtml(m.segSuffix)}"</span></div>
         <div class="sv-field"><span class="sv-key">FORMAT</span><span class="sv-val">${m.ratio}, ${m.durSec}s total${m.totalSegs>1?' | Seg '+m.segIdx+'/'+m.totalSegs:''}, ultra-fast cinematic pacing, seamless quick cuts animation</span></div>
         <div class="sv-field"><span class="sv-key">STYLE</span><span class="sv-val">${escapeHtml(m.style)} · expressive face · polished materials · cinematic lighting · subtle motion blur</span></div>
+        ${m.customCharDesc ? `<div class="sv-field"><span class="sv-key">CHARACTER</span><span class="sv-val" style="color:#D45C3C;font-weight:600">${escapeHtml(m.customCharDesc)}</span></div>` : ''}
         <div class="sv-field"><span class="sv-key">MOOD ARC</span><span class="sv-val">${escapeHtml(m.moodArc)}</span></div>
         <div class="sv-field"><span class="sv-key">ENV FLOW</span><span class="sv-val">${escapeHtml(m.envFlow)}</span></div>
       </div>
@@ -4517,6 +4787,22 @@ function pickCustomStyle(el, name) {
   customStyleSel = name;
   curStyle = name; // also update global style
   syncAllStylePickers(name);
+  // Show clear button
+  const clearBtn = document.getElementById('btnClearStyle');
+  if (clearBtn) clearBtn.style.display = 'flex';
+}
+
+// ── Clear style selection ──
+function clearCustomStyle() {
+  const grid = document.getElementById('styleGridCustom');
+  if (grid) grid.querySelectorAll('.sc-sm').forEach(c => c.classList.remove('on'));
+  customStyleSel = '';
+  curStyle = '';
+  syncAllStylePickers('');
+  // Hide clear button
+  const clearBtn = document.getElementById('btnClearStyle');
+  if (clearBtn) clearBtn.style.display = 'none';
+  toast('&#10005; Style dikosongkan — karakter library akan dipakai tanpa override style');
 }
 
 // ── Build character prompt prefix ──
@@ -4534,6 +4820,33 @@ function buildCharPrompt() {
     return `${customStyleSel} animation character${details ? ', ' + details : ''}, `;
   }
   return '';
+}
+
+// ── Build full character description for storyboard injection ──
+// Returns a detailed string when charMode === 'custom', otherwise empty string
+function buildCustomCharDescription() {
+  if (charMode !== 'custom') return '';
+
+  const gender = document.getElementById('cd_gender')?.value.trim() || '';
+  const age    = document.getElementById('cd_age')?.value.trim()    || '';
+  const hair   = document.getElementById('cd_hair')?.value.trim()   || '';
+  const outfit = document.getElementById('cd_outfit')?.value.trim() || '';
+  const expr   = document.getElementById('cd_expr')?.value.trim()   || '';
+  const acc    = document.getElementById('cd_acc')?.value.trim()    || '';
+  const style  = customStyleSel || curStyle || '';
+
+  const parts = [];
+  if (style)  parts.push(`${style} animation style`);
+  if (gender) parts.push(gender);
+  if (age)    parts.push(`${age} years old`);
+  if (hair)   parts.push(`${hair} hair`);
+  if (outfit) parts.push(`wearing ${outfit}`);
+  if (acc)    parts.push(`with ${acc}`);
+  if (expr)   parts.push(`${expr} expression`);
+
+  if (!parts.length) return '';
+
+  return parts.join(', ');
 }
 
 
