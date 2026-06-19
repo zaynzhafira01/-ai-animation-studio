@@ -602,6 +602,16 @@ h1.hero-h1 .star{color:#D4A017;font-size:.5em;vertical-align:super}
 }
 .btn-go-storyboard:hover { transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,92,60,.4); }
 
+/* Link ke Custom GPT — AI Animation Director */
+.btn-gpt-director {
+  display:inline-flex;align-items:center;gap:8px;
+  padding:.7rem 1.4rem;font-size:.86rem;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,#10A37F,#1A7F64);border:none;border-radius:13px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:.2s;text-decoration:none;
+  box-shadow:0 4px 16px rgba(16,163,127,.32);
+}
+.btn-gpt-director:hover { transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,163,127,.4); color:#fff; }
+
 /* Two-column layout (same as storyboard) */
 .vp-grid { display:grid; grid-template-columns: 320px 1fr; gap: 1.8rem; align-items:start; }
 @media(max-width:820px){ .vp-grid { grid-template-columns:1fr; } }
@@ -4936,6 +4946,13 @@ function pickStylePopup(el, name) {
       <div class="si-title" id="si-title">—</div>
       <div class="si-hook" id="si-hook">—</div>
       <div class="si-meta" id="si-meta"></div>
+    </div>
+
+    <!-- Link langsung ke Custom GPT: AI Animation Director -->
+    <div style="margin:1rem 0 1.4rem">
+      <a class="btn-gpt-director" href="https://chatgpt.com/g/g-6a1174410aa08191840b269bacaec0f1-ai-animation-director/c/6a348da3-42a4-83ec-b084-c43221fc93bb" target="_blank" rel="noopener noreferrer">
+        &#129302; Buka AI Animation Director (ChatGPT)
+      </a>
     </div>
 
     <!-- Storyboard output (auto-generates on arrival) -->
