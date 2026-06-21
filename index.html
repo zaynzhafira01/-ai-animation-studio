@@ -1850,7 +1850,7 @@ function parseDbString(raw) {
     'Documentary': `Handheld intimacy, natural light, b-roll autentik "${title}" — testimoni nyata, momen candid yang tak terduga.`,
     'Anime': `Dynamic camera movement, speed lines di momen kunci, close-up ekspresi dramatis karakter dalam konteks "${title}".`,
     'Horror': `Shadow approach ke "${title}", jump cut ke reveal, suasana senyap mencekam sebelum klimaks.`,
-    'Romance': `Bokeh warm light, dua karakter saling mendekat, detail tangan dan ekspresi dalam "${title}".`,
+    'Romance': `Soft bokeh light, dua karakter saling mendekat, detail tangan dan ekspresi dalam "${title}".`,
     'Comedy': `Reaction shots berlebihan, Dutch angle untuk chaos, timing komedi saat "${title}" terjadi.`,
     'Action': `Tracking shot cepat, slow-motion momen puncak "${title}", kinetic energy dari awal sampai akhir.`,
     'Sci-Fi': `Futuristic environment framing "${title}", data visualization overlay, wide shot skala epik.`,
@@ -2001,7 +2001,7 @@ function syncAllStylePickers(name) {
 }
 
 function tog(el,group){
-  const single=['dur','rat','genre'];
+  const single=['dur','rat','genre','mood'];
   if(single.includes(group)){
     el.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
     el.classList.add('on');
@@ -2320,7 +2320,7 @@ function buildSbPrompt() {
   const mood    = [...sel.mood][0] || 'Dreamy';
   const ratio   = [...sel.rat][0]  || '9:16';
   const loc     = (selectedIdea?.visual?.split(',')[0]) || 'cinematic environment';
-  const time    = 'golden hour';
+  const time    = 'neutral daylight';
   const atmo    = [...sel.mood][0]?.toLowerCase() + ' atmosphere' || 'dreamy atmosphere';
   const actionRaw = 'expressive movement';
   const exprRaw   = [...sel.mood][0]?.toLowerCase() || 'emotional';
@@ -2415,16 +2415,27 @@ async function mockStoryboard() {
     ? `custom character (${customCharDesc})`
     : null;
 
+  // ── Character Library reference injection ──
+  // "Dari Library" mode (charMode === 'ref') means the user is using a character
+  // sourced from the external Character Library (karakterlibrary.pages.dev) as an
+  // uploaded reference image — NOT a manually-typed character (charMode === 'custom').
+  // Note: selectedChar stays null in this UI (panel-ref is just a link-out CTA),
+  // so we key off charMode alone rather than requiring selectedChar to be set.
+  const isLibraryChar = (charMode === 'ref');
+  const libRefPrefix = isLibraryChar
+    ? 'Gunakan style gambar, texture, karakter, warna, dan kualitas gambar yang diupload sebagai referensi. Gunakan exactly, style gambar nya. '
+    : '';
+
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const pickN = (arr, n) => { const s=[...arr].sort(()=>Math.random()-.5); return s.slice(0,n); };
 
   // ── Style-specific visual language ──
   const STYLE_DB = {
-    'Clay Style':    { mat:'smooth clay surfaces with visible fingerprint texture', light:'warm studio softbox lighting with soft clay shadows', env:'handcrafted clay-world environment with rounded organic shapes', char:'expressive clay character with squash-and-stretch proportions', fx:'clay material catching light with subtle translucency' },
+    'Clay Style':    { mat:'smooth clay surfaces with visible fingerprint texture', light:'neutral studio softbox lighting with soft clay shadows', env:'handcrafted clay-world environment with rounded organic shapes', char:'expressive clay character with squash-and-stretch proportions', fx:'clay material catching light with subtle translucency' },
     '3D Pixar':      { mat:'subsurface skin glow and fine fabric weave detail', light:'three-point cinematic rig with volumetric rim light', env:'richly layered Pixar-style world full of incidental storytelling details', char:'expressive hero character with oversized eyes and nuanced micro-expressions', fx:'particle dust motes drifting through shafts of light' },
     '3D Disney':     { mat:'painterly surface shading with princess-quality detail', light:'magical luminescent ambient with sparkle highlights', env:'enchanted Disney storybook environment brimming with whimsy', char:'elegant Disney-style character with flowing hair and expressive silhouette', fx:'magical shimmer and firefly particles floating in air' },
-    'Felt Style':    { mat:'thick felt fabric texture with visible fiber weave', light:'flat warm craft-table lighting with soft felt shadows', env:'handstitched felt world with button accents and stitched borders', char:'flat felt character with embroidered facial features and fabric folds', fx:'loose felt threads lifting gently at edges of movement' },
-    'Crochet Style': { mat:'yarn loop texture with visible crochet stitch pattern', light:'warm handmade-craft lighting casting soft yarn shadows', env:'crocheted landscape with yarn grass, loop-knit trees and stitch-border details', char:'amigurumi-style crochet character with button eyes and yarn hair', fx:'loose yarn strands floating and bouncing with character movement' },
+    'Felt Style':    { mat:'thick felt fabric texture with visible fiber weave', light:'flat neutral craft-table lighting with soft felt shadows', env:'handstitched felt world with button accents and stitched borders', char:'flat felt character with embroidered facial features and fabric folds', fx:'loose felt threads lifting gently at edges of movement' },
+    'Crochet Style': { mat:'yarn loop texture with visible crochet stitch pattern', light:'neutral handmade-craft lighting casting soft yarn shadows', env:'crocheted landscape with yarn grass, loop-knit trees and stitch-border details', char:'amigurumi-style crochet character with button eyes and yarn hair', fx:'loose yarn strands floating and bouncing with character movement' },
     'Papercut Style':{ mat:'layered paper with visible cut edge shadows and card stock texture', light:'directional light raking across paper layers to cast depth shadows', env:'multilayer paper-diorama world with silhouette trees and punched-out stars', char:'flat papercut character with articulated jointed limbs and crisp cut silhouette', fx:'paper edges catching light, thin shadow lines between each layer' },
     'Lego Style':    { mat:'injection-moulded ABS plastic with stud-top surfaces and seam lines', light:'bright even studio light with hard plastic specular highlights', env:'blocky Lego minifigure-scale world built from recognisable brick components', char:'classic Lego minifigure character with C-grip hands and cylinder head', fx:'Lego stud connection snap effect and brick-separation particle burst' },
     'Kawaii Style':  { mat:'pastel soft-shading with blush-cheek highlight circles', light:'soft diffused cotton-candy lighting with pale rainbow rim', env:'sugary kawaii landscape with round clouds, heart bushes and star-sparkle details', char:'big-headed chibi character with dot eyes, rosy cheeks and tiny hands', fx:'floating hearts, sparkle stars and pastel petal shower effects' },
@@ -2441,12 +2452,12 @@ async function mockStoryboard() {
   // ── Mood-specific atmosphere & colour ──
   const MOOD_DB = {
     'Dreamy':    { atmo:'hazy soft-focus dreamy atmosphere', color:'lavender and pearl white tones', energy:'slow floating movement', tension:'gentle building wonder' },
-    'Epic':      { atmo:'sweeping grand cinematic atmosphere', color:'deep gold and storm-blue tones', energy:'powerful surging momentum', tension:'mounting heroic pressure' },
+    'Epic':      { atmo:'sweeping grand cinematic atmosphere', color:'deep blue and storm-grey tones', energy:'powerful surging momentum', tension:'mounting heroic pressure' },
     'Dark':      { atmo:'shadowy unsettling atmosphere with creeping dread', color:'deep charcoal, blood red and sickly green tones', energy:'slow predatory movement', tension:'relentless escalating fear' },
     'Funny':     { atmo:'bright bouncy comedic atmosphere', color:'saturated primary colours with comedic contrast', energy:'snappy rubbery timing', tension:'escalating absurd momentum' },
-    'Emotional': { atmo:'raw intimate emotional atmosphere', color:'muted warm amber and cool tear-blue tones', energy:'weighted slow deliberate movement', tension:'suppressed feeling about to break' },
-    'Happy':     { atmo:'warm golden euphoric atmosphere', color:'sunshine yellow, coral and sky-blue tones', energy:'buoyant springy joyful movement', tension:'pure celebratory anticipation' },
-    'Cute':      { atmo:'sugary warm adorable atmosphere', color:'pastel pink, mint and peach tones', energy:'bouncy waddle-and-wiggle movement', tension:'innocent playful mischief building' },
+    'Emotional': { atmo:'raw intimate emotional atmosphere', color:'muted neutral tones with cool tear-blue accents', energy:'weighted slow deliberate movement', tension:'suppressed feeling about to break' },
+    'Happy':     { atmo:'bright joyful euphoric atmosphere', color:'sky-blue, coral and fresh green tones', energy:'buoyant springy joyful movement', tension:'pure celebratory anticipation' },
+    'Cute':      { atmo:'light playful adorable atmosphere', color:'pastel pink, mint and lavender tones', energy:'bouncy waddle-and-wiggle movement', tension:'innocent playful mischief building' },
   };
   const moodVfx = MOOD_DB[mood] || MOOD_DB['Dreamy'];
 
@@ -2504,7 +2515,7 @@ async function mockStoryboard() {
     `echo of opening shot — same angle as panel 1 but emotionally transformed, full arc of "${title}" completed`,
     `character releasing something — object or emotion from "${storyCtx}" floating softly away into ${styleVfx.env}`,
     `final wide panorama — closing image of "${title}", ${moodVfx.color} sky, ${moodVfx.atmo} lingering`,
-    `intimate two-shot — characters at peace, negative space that was tension is now warmth, "${title}" resolved`,
+    `intimate two-shot — characters at peace, negative space that was tension is now calm, "${title}" resolved`,
     `close-up of character eyes again — same framing as early panel, but expression entirely transformed by "${storyCtx}"`,
     `environment restoration — world of "${title}" settling back to stillness, beauty amplified by what just happened`,
     `slow fade to texture — ${styleVfx.mat} surface fills frame as "${storyCtx}" fades to memory`,
@@ -2525,7 +2536,7 @@ async function mockStoryboard() {
     `spatial relationship panel — how far apart or close together characters are in "${storyCtx}" tells everything`,
     `shadow and light interplay — ${styleVfx.fx} casting symbolic shadows across "${title}" characters and set`,
     `texture and scale contrast — tiny character against enormous ${styleVfx.env} backdrop, stakes of "${storyCtx}" visible`,
-    `colour temperature shift — warm-to-cool or cool-to-warm transition panel marking emotional beat in "${title}"`,
+    `colour temperature shift — subtle tonal transition panel marking emotional beat in "${title}"`,
     `hands and gesture close-up — non-verbal storytelling, body language of "${storyCtx}" in pure physical form`,
     `reflection or window panel — character of "${title}" seeing themselves or their world distorted in a reflective surface`,
     `crowd or background reaction — world of "${storyCtx}" responding to protagonist's action, ripple effect visible`,
@@ -2537,16 +2548,16 @@ async function mockStoryboard() {
   const LIGHTING = [
     `${moodVfx.color} ${styleVfx.light}`,
     `dramatic chiaroscuro — deep shadows split by single hard key light`,
-    `soft golden-hour wrap — warm backlight haloing every surface`,
+    `soft directional light wrap — even light haloing every surface`,
     `cool blue practical light — moonlight or screen glow in a dark scene`,
     `dynamic lighting transition — panel starts in shadow and ends in revelation`,
     `rim-light silhouette — character edge-lit against a glowing ${styleVfx.env} background`,
     `overcast diffuse — flat but rich ambient light showing every ${styleVfx.mat} texture`,
-    `candle or fire flicker — warm unstable light dancing across ${styleVfx.char} face`,
+    `soft flicker — gentle unstable light dancing across ${styleVfx.char} face`,
     `neon accent — saturated colour light adding ${moodVfx.color} atmosphere`,
     `underwater caustic — rippling light patterns from above casting on everything`,
     `magic shimmer — ${styleVfx.fx} catching light with internal glow`,
-    `sunrise gradient — horizon warming from deep purple to amber`,
+    `clear gradient sky — horizon transitioning between cool tones`,
     `window light shaft — single column of dust-mote-filled light cutting darkness`,
     `storm light — bruised purple-green sky casting sickly cinematic tones`,
     `moonrise backlight — cool silver rim on all silhouettes in frame`,
@@ -2722,6 +2733,7 @@ async function mockStoryboard() {
       sheets.push({
         segment: seg,
         prompt:
+          libRefPrefix +
           `MOVIE TRAILER storyboard sheet, 10-panel cinematic trailer sequence, ${style} animation style, ` +
           `film: "${title}"${hook ? `, tagline: "${hook}"` : ''}, ` +
           (customCharDesc ? `character: ${customCharDesc}, ` : '') +
@@ -2776,6 +2788,7 @@ async function mockStoryboard() {
     sheets.push({
       segment: seg,
       prompt:
+        libRefPrefix +
         `cinematic storyboard sheet, 10-panel storyboard, ${style} animation style, ` +
         `story: "${title}"${hook ? `, hook: "${hook}"` : ''}, ` +
         (customCharDesc ? `character: ${customCharDesc}, ` : '') +
@@ -3031,8 +3044,8 @@ function renderVpSummary() {
   const descEl = document.getElementById('vp-desc-text');
   if (descEl) {
     descEl.innerHTML = isShortVideo
-      ? 'AI membuat <strong>1 Quick Cuts prompt per 10 detik</strong> menggunakan template Seamless Quick Cuts Animation. Setiap prompt mencakup 7–9 shots lengkap dengan shot type, kamera, lighting, emosi, dan sound design — siap di-paste ke Veo, Kling, atau Runway.'
-      : 'AI membuat <strong>1 cinematic video prompt per 10 detik</strong>. Setiap prompt mencakup sequence penuh — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora. Bukan per panel, bukan per shot.';
+      ? 'AI membuat <strong>1 Quick Cuts prompt per 10 detik</strong>. Karena storyboard sudah kamu generate di Step 2, setiap prompt cukup berisi instruksi untuk mengikuti storyboard yang diupload — siap di-paste ke Veo, Kling, atau Runway bersama storyboard sheet-nya.'
+      : 'AI membuat <strong>1 video prompt per 10 detik</strong>. Karena storyboard sudah kamu generate di Step 2, setiap prompt cukup berisi instruksi untuk mengikuti storyboard yang diupload — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora bersama storyboard sheet-nya.';
   }
 
   if (!sheets || !sheets.length) {
@@ -3061,8 +3074,8 @@ function renderVpSummary() {
         <div class="vp-sum-meta">
           <strong>${sheets.length} segment${sheets.length>1?'s':''}</strong> &middot; ${dur} &middot; ${ratio} &middot; Style: <strong>${curStyle}</strong>
           &middot; ${isShortVideo
-            ? `akan menghasilkan <strong>${sheets.length} Quick Cuts prompt</strong> (7–9 shots each)`
-            : `akan menghasilkan <strong>${sheets.length} video prompt</strong> per platform`}
+            ? `akan menghasilkan <strong>${sheets.length} Quick Cuts prompt</strong> (storyboard reference)`
+            : `akan menghasilkan <strong>${sheets.length} video prompt</strong> per platform (storyboard reference)`}
         </div>
       </div>
       <button class="btn-sb-act" onclick="goStep('storyboard')">&#128270; Lihat Storyboard</button>
@@ -3126,335 +3139,36 @@ function vpRebindControls() {
 
 // ── Build the LLM prompt for video prompt generation (NEW: 1 per 10s) ──
 function buildVpLlmPrompt(sheets, platforms) {
-  const title = selectedIdea?.title || 'Cinematic Story';
-  const style = curStyle;
-  const ratio = [...sel.rat][0] || '9:16';
-  const mood  = [...sel.mood][0] || 'Dreamy';
-  const type  = [...sel.type][0] || 'Cinematic';
-  const dur   = [...sel.dur][0]  || '30 detik';
-
-  const sheetSummary = sheets.map((s, i) => ({
-    index: i + 1,
-    segment: s.segment,
-    storyboard_prompt: s.prompt
-  }));
-
-  const platformInstructions = platforms.map(key => {
-    const cfg = PLATFORMS[key];
-    return `- "${key}" (${cfg.name}): ${cfg.formatHint}`;
-  }).join('\n');
-
-  const charContext = buildCharContextFor([title]);
-
-  const audioBlock = (vpSel.audio && vpSel.audio !== 'None')
-    ? `- Audio Direction: ${vpSel.audio} (include audio cues in Veo/Sora prompts)`
-    : `- Audio Direction: silent (omit audio cues)`;
-
   return `You are a professional AI cinematic video prompt engineer.
 
 Your task: generate EXACTLY ${sheets.length} video prompt(s) per platform — one for each 10-second segment.
-Do NOT generate per-panel or per-scene prompts. Each video prompt covers a full 10-second cinematic sequence.
 
-Story: ${title}
-Visual Style: ${style}
-Mood: ${mood}
-Video Type: ${type}
-Duration: ${dur} → ${sheets.length} segment(s)
-Aspect Ratio: ${ratio}
+IMPORTANT: A storyboard has already been created for this story and uploaded to the video generation tool.
+The video prompt itself must ALWAYS be exactly this fixed instruction (do not rewrite, paraphrase, or expand it):
 
-User-controlled video direction:
-- Camera Movement: ${vpSel.camMovement}
-- Pace: ${vpSel.pace}
-- Motion Intensity: ${vpSel.intensity}
-- Animation Style: ${vpSel.animStyle}
-${audioBlock}
-
-Storyboard sheets (${sheets.length} total, each = 10 seconds):
-${JSON.stringify(sheetSummary)}
-
-Target Platforms:
-${platformInstructions}${charContext}
-
-For each segment and each platform, generate ONE large cinematic video prompt that covers the full 10-second sequence.
-The prompt must describe the complete motion, character arc, and atmosphere for that segment — not individual shots.
+"Use the uploaded storyboard as the exact visual and storytelling reference. Follow the storyboard panels exactly. Smooth cinematic transitions between storyboard panels"
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"prompts": {${platforms.map(p => `"${p}": ["video prompt for segment 1 (0–10s)", "video prompt for segment 2 (10–20s)", ...]`).join(', ')}}}
+{"prompts": {${platforms.map(p => `"${p}": ["Use the uploaded storyboard as the exact visual and storytelling reference. Follow the storyboard panels exactly. Smooth cinematic transitions between storyboard panels", "..."]`).join(', ')}}}
 
 Rules:
 - Each platform array must have exactly ${sheets.length} prompt(s), ordered by segment.
-- Each prompt = ONE large cinematic video description for 10 seconds.
-- Maintain visual continuity (same character, style, world) across all segments.
-- Include camera movement, pace, intensity choices naturally throughout the prompt.
-- Seamless transitions between segments must be implied in the prompt language.
-- For Veo: flowing cinematic paragraph with motion & audio cues.
-- For Kling: structured but covering the full 10-second sequence.
-- For Runway: leads with camera movement covering the full clip.
-- For Pika: concise, motion-keyword forward (max ~60 words).
-- For Sora: detailed screenplay-style covering the full 10-second scene.
-- For Universal: balanced cinematic description usable on any platform.
-- All output in English.`;
+- Every single prompt string, for every platform and every segment, must be EXACTLY this text and nothing else: "Use the uploaded storyboard as the exact visual and storytelling reference. Follow the storyboard panels exactly. Smooth cinematic transitions between storyboard panels"
+- Do not add the story title, style, mood, camera, or any other detail to the prompt text — those are already encoded in the storyboard image itself.
+- Do not vary the wording between platforms or segments.`;
 }
 
 // ── Call worker to generate per-platform prompts (1 per 10s segment) ──
 
 function mockVideoPrompts(sheets, platforms) {
-  const style     = curStyle;
-  const mood      = [...sel.mood][0] || 'Dreamy';
-  const ratio     = [...sel.rat][0]  || '9:16';
-  const cam       = vpSel.camMovement;
-  const pace      = vpSel.pace;
-  const intensity = vpSel.intensity;
-  const audio     = vpSel.audio;
-  const title     = selectedIdea?.title   || 'Cinematic Story';
-  const hook      = selectedIdea?.hook    || '';
-  const summary   = selectedIdea?.summary || '';
-  const storyCtx  = summary || title;
-
-  // ── Custom character injection ──
-  const customCharDesc = buildCustomCharDescription();
-
-  const pick  = arr => arr[Math.floor(Math.random() * arr.length)];
-  const pickN = (arr, n) => [...arr].sort(()=>Math.random()-.5).slice(0,n);
-
-  // ── Style-specific video language ──
-  const STYLE_VID = {
-    'Clay Style':    { render:'stop-motion clay animation aesthetic', surface:'smooth clay with thumbprint texture and material weight', motion:'squash-and-stretch physics, deliberate frame-by-frame clay motion', light:'warm studio softbox with clay shadow definition' },
-    '3D Pixar':      { render:'Pixar RenderMan-quality 3D animation', surface:'subsurface skin glow, fine fabric weave, micro-surface detail', motion:'performance-capture-quality character animation with emotional nuance', light:'three-point cinematic rig with volumetric atmosphere' },
-    '3D Disney':     { render:'Disney Feature Animation 3D quality', surface:'princess-grade surface shading with magical material properties', motion:'fluid princely character animation with flowing hair simulation', light:'enchanted luminescent ambient with magical particle scatter' },
-    'Felt Style':    { render:'stop-motion felt craft animation', surface:'visible felt fiber weave with button and stitch surface detail', motion:'tactile handmade movement quality, slight jitter of physical craft animation', light:'flat warm craft-table lighting with soft felt shadow' },
-    'Crochet Style': { render:'stop-motion amigurumi crochet animation', surface:'yarn loop texture with visible stitch pattern across all surfaces', motion:'bouncy amigurumi physics, yarn hair and limb dynamics', light:'warm handmade ambient with soft yarn-material shadows' },
-    'Papercut Style':{ render:'paper-diorama cutout animation style', surface:'layered paper with cut-edge shadows and card stock colour saturation', motion:'flat plane movement with parallax depth, paper-fold articulation', light:'directional light raking across paper layers for depth shadow' },
-    'Lego Style':    { render:'Lego Movie brick-built animation quality', surface:'ABS plastic stud surfaces with injection-mould seam detail', motion:'Lego minifigure articulation physics, stiff-arm brick-built movement', light:'bright even studio light with hard plastic specular pop' },
-    'Kawaii Style':  { render:'pastel chibi kawaii 3D animation', surface:'soft pastel shading with blush-circle highlight and rounded geometry', motion:'bouncy chibi proportions, exaggerated waddle and jump physics', light:'soft diffused cotton-candy lighting with pale rainbow rim' },
-    'Anime Style':   { render:'high-frame-rate anime cel animation quality', surface:'clean cel-shade fill with sharp shadow line and hair highlight streak', motion:'anime-physics hair and cloth simulation, speed-line motion emphasis', light:'dramatic anime key light with lens flare and bloom' },
-    'Cartoon Style': { render:'classic cartoon 2D animation quality', surface:'thick ink outline on flat colour fill with graphic shadow shape', motion:'rubber-hose bounce physics, cartoon smear-frame on fast action', light:'graphic cartoon lighting with hard shadow pop and highlight shape' },
-  };
-  const sv = STYLE_VID[style] || STYLE_VID['Kawaii Style'];
-
-  // Override character/subject description with custom character if provided
-  const charSubject = customCharDesc
-    ? `${customCharDesc} rendered in ${sv.render} quality`
-    : `${sv.surface} character`;
-
-  // ── Mood-specific video descriptors ──
-  const MOOD_VID = {
-    'Dreamy':    { pace_word:'unhurried floating', color:'lavender, pearl and soft gold palette', energy:'gentle drifting momentum', sound:'ambient ethereal tone with soft breath texture' },
-    'Epic':      { pace_word:'sweeping relentless', color:'deep gold, storm blue and ash white palette', energy:'surging cinematic power', sound:'orchestral swell with deep percussion and rising brass' },
-    'Dark':      { pace_word:'slow predatory', color:'deep charcoal, blood red and sickly green palette', energy:'creeping inevitable dread', sound:'low sub-frequency drone with distant metallic scrape' },
-    'Funny':     { pace_word:'snappy comedic', color:'saturated primary palette with comedic contrast', energy:'bouncy rubber-hose timing', sound:'playful cartoon foley with comedic sting accents' },
-    'Emotional': { pace_word:'weighted deliberate', color:'muted amber, dusty rose and cool tear-blue palette', energy:'slow gravity of feeling', sound:'sparse piano with soft string swell and breath' },
-    'Happy':     { pace_word:'buoyant joyful', color:'sunshine yellow, coral and sky-blue palette', energy:'springy celebratory lift', sound:'bright acoustic guitar with hand percussion and laughter texture' },
-    'Cute':      { pace_word:'playful bouncy', color:'pastel pink, mint and peach palette', energy:'adorable wiggle-and-bounce', sound:'soft toy-box music with gentle bell and squeak foley' },
-  };
-  const mv = MOOD_VID[mood] || MOOD_VID['Dreamy'];
-
-  // ── Shot type database (30 types) ──
-  const SHOT_TYPES = [
-    'ECU (extreme close-up)', 'CU (close-up)', 'MCU (medium close-up)', 'MS (medium shot)',
-    'MWS (medium wide shot)', 'WS (wide shot)', 'EWS (extreme wide shot)', 'POV (point-of-view)',
-    'OTS (over-the-shoulder)', 'insert shot', 'two-shot', 'reaction shot', 'cutaway',
-    'establishing shot', 'aerial shot', 'ground-level shot', 'dutch angle shot',
-    'tracking shot', 'dolly shot', 'crane shot', 'handheld shot', 'steadicam shot',
-    'whip-pan shot', 'rack-focus shot', 'tilt shot', 'arc shot', 'push-in',
-    'pull-back', 'zoom shot', 'freeze-frame'
-  ];
-
-  // ── Camera move database (20) ──
-  const CAM_MOVES = [
-    `${cam} — smooth and intentional`,
-    'slow push-in building intimate pressure',
-    'quick snap-pan capturing sudden movement',
-    'wide arc circling the subject with purpose',
-    'handheld drift adding organic life to the frame',
-    'dolly-zoom creating psychological depth distortion',
-    'crane descent from aerial to eye-level',
-    'whip-pan blur transitioning space and time',
-    'static locked-off frame letting action fill it',
-    'tilt reveal from ground to sky',
-    'tracking alongside character in motion',
-    'pull-back slow unveiling the wider world',
-    'overhead top-down pressing down on the scene',
-    'worm-eye up-angle conferring power on subject',
-    'focus pull shifting story emphasis between planes',
-    'steady glide through environment',
-    'parallax foreground-background split movement',
-    'snap-zoom punching into key detail',
-    'orbit slow rotation around central subject',
-    'float rising upward with dreamy lift',
-  ];
-
-  // ── Lighting database (20) ──
-  const LIGHTING = [
-    sv.light,
-    'dramatic chiaroscuro — deep shadow split by single hard key',
-    'soft golden-hour wrap — warm backlight haloing everything',
-    'cool blue moonlight with warm practical accent',
-    'rim-light silhouette — edge-lit against glowing background',
-    'candle flicker — warm unstable intimate light',
-    'neon colour accent — saturated gel wash adding mood',
-    'overcast diffuse — flat rich ambient showing every surface',
-    'sunrise gradient — horizon warming from purple to amber',
-    'storm light — bruised purple-green cinematic sky',
-    `${mv.color} colour grade throughout`,
-    'magic shimmer — internal glow catching light',
-    'window shaft — column of dust-mote light cutting dark',
-    'lens flare cutting across frame as source moves into shot',
-    'three-point studio rig — clean professional setup',
-    'contre-jour backlit silhouette — shape over detail',
-    'underwater caustic ripple — light from above distorted',
-    'dappled canopy — sun through leaves in moving patches',
-    'flash freeze — sudden burst of hard light on peak moment',
-    'fade-to-dark — light draining as emotional weight lands',
-  ];
-
-  // ── Sound design database (15) ──
-  const SOUNDS = [
-    mv.sound,
-    'ambient environment hum with subtle foley texture',
-    'rhythmic percussion building with scene momentum',
-    'single sustained note swelling to emotional peak',
-    'silence broken by one sharp sound at impact moment',
-    'layered nature ambience with character breath texture',
-    'mechanical or urban texture matching environment',
-    'musical motif fragment hinting at emotional resolution',
-    'low bass rumble signalling impending consequence',
-    'high delicate tone contrasting with visual weight',
-    'crowd or world murmur fading to intimate focus',
-    'echo and reverb emphasising spatial scale',
-    'heartbeat rhythm synced to camera movement',
-    'wind texture carrying emotional charge through frame',
-    'complete silence — visual story carrying full weight alone',
-  ];
-
-  // ── Micro-action database (20) ──
-  const MICRO = [
-    'fingers tense on surface — weight of decision felt in every knuckle',
-    'eyes flick sideways — threat clocked without turning the head',
-    'chest rises on sharp intake — body absorbing what the mind resists',
-    'foot pivots, weight shifts — body already moving before mind decides',
-    'jaw tightens, lips press — everything held in, nothing spilling yet',
-    'shoulders drop — surrender or relief releasing through the spine',
-    'brow furrows, head tilts — pieces assembling, meaning forming',
-    'hands open wide — realisation hitting with full physical force',
-    'breath visible — cold or emotional charge making the invisible visible',
-    'hair or fabric catches a breath of wind — world still alive around stillness',
-    'a single blink — the only thing moving in a frozen moment',
-    'hand reaches but stops — want and hesitation occupying the same instant',
-    'head turns slowly — dread or wonder pulling attention against resistance',
-    'smile breaking — joy or relief cracking through composed exterior',
-    'fist clenches — resolve hardening into physical form',
-    'step back — instinct overriding intention, body retreating',
-    'chin lifts — dignity asserted in the face of pressure',
-    'eyes close — shutting out or internalising what cannot be faced openly',
-    'tongue touches lip — concentration or desire expressed without words',
-    'stillness after motion — the moment after everything changes, held',
-  ];
+  // ── Fixed video prompt ──
+  // A storyboard has already been generated and uploaded to the video tool.
+  // Every video prompt (every platform, every segment) is ALWAYS this exact instruction.
+  const FIXED_VIDEO_PROMPT = 'Use the uploaded storyboard as the exact visual and storytelling reference. Follow the storyboard panels exactly. Smooth cinematic transitions between storyboard panels';
 
   const result = {};
-
   platforms.forEach(pkey => {
-    result[pkey] = sheets.map((sheet, i) => {
-      const seg     = sheet.segment || `${i*10}–${(i+1)*10}s`;
-      const isFirst = i === 0;
-      const isLast  = i === sheets.length - 1;
-      const totalSegs = sheets.length;
-
-      const actLabel = isFirst ? 'OPENING' : isLast ? 'RESOLUTION' : i < totalSegs/2 ? 'RISING ACTION' : 'CLIMAX';
-      const narrative = isFirst
-        ? `opens the world of "${title}" with ${mv.energy}, establishing visual identity and emotional premise`
-        : isLast
-        ? `delivers the earned resolution of "${storyCtx}", releasing tension with ${mv.pace_word} finality`
-        : `advances "${storyCtx}" with ${mv.energy}, narrative pressure mounting toward climax`;
-
-      // Pick unique shots for this segment
-      const shots = pickN(SHOT_TYPES, 10);
-      const cams  = pickN(CAM_MOVES, 10);
-      const lights = pickN(LIGHTING, 3);
-      const micros = pickN(MICRO, 5);
-      const sound  = pick(SOUNDS);
-
-      // ── Shot breakdown (10 shots per segment) ──
-      const shotBlock = shots.map((shotType, s) => {
-        const t0 = (i * 10 + s * 1.0).toFixed(1);
-        const t1 = (i * 10 + s * 1.0 + 1.0).toFixed(1);
-        const camDesc = cams[s] || cam;
-        const micro   = micros[s % micros.length];
-        return `[${t0}s–${t1}s] ${shotType} · ${camDesc} · ${micro}`;
-      }).join('\n');
-
-      // ── Platform-specific output ──
-      if (pkey === 'veo') {
-        return `${sv.render} — ${actLabel} (${seg})\n\n` +
-          `The sequence ${narrative}. ` +
-          `A ${pick(cams)} moves through a ${sv.surface} environment rendered in full ${style} fidelity. ` +
-          `${mv.energy.charAt(0).toUpperCase()+mv.energy.slice(1)} fills every frame as the ${mv.color} palette wraps the world. ` +
-          `${sv.motion} gives the ${charSubject} physical truth. ` +
-          `Lighting: ${lights[0]}, shifting to ${lights[1]} at the emotional peak. ` +
-          `${audio !== 'None' ? 'Audio: ' + sound + '.' : 'No dialogue — visual storytelling only.'} ` +
-          `Story: "${storyCtx}". Aspect ratio ${ratio}. ` +
-          `${isLast ? 'Final segment — full emotional payoff, hold on closing image.' : `Seamless handoff to next segment — same ${style} world, ${mv.color} continuity.`}\n\n` +
-          `SHOT BREAKDOWN:\n${shotBlock}`;
-      }
-
-      if (pkey === 'kling') {
-        return `[${actLabel} — ${seg}] ${style} animated sequence that ${narrative}\n` +
-          `Subject: ${charSubject}\n` +
-          `Camera: ${pick(cams)}, ${intensity} motion, ${pace} pacing\n` +
-          `Environment: ${sv.motion}, ${mv.color} palette, ${lights[0]}\n` +
-          `Mood: ${mood} — ${mv.energy}\n` +
-          `Style: ${style}, ${sv.render}\n` +
-          `Story: ${storyCtx} | Ratio: ${ratio}\n` +
-          `${isLast ? 'Final segment — resolution.' : 'Continues to next segment — maintain visual world.'}\n\n` +
-          `10-SHOT BREAKDOWN:\n${shotBlock}`;
-      }
-
-      if (pkey === 'runway') {
-        return `${pick(cams).split('—')[0].trim()} through ${style} world (${seg} — ${actLabel}): ` +
-          `${narrative}. ` +
-          `${pace} pacing, ${intensity} motion, ${mv.color} atmosphere. ` +
-          `${sv.render}, ${charSubject}, ${lights[0]}. ` +
-          `${audio !== 'None' ? sound + ' audio.' : ''} ` +
-          `${ratio}. ${isLast ? 'Final close.' : 'Seamless cut to next.'}\n\n` +
-          `SHOT LIST:\n${shotBlock}`;
-      }
-
-      if (pkey === 'pika') {
-        const core = shots.slice(0,4).join(', ');
-        return `${style} animation ${seg} [${actLabel}], ${narrative.slice(0,80)}. ` +
-          `${pick(cams).split('—')[0].trim()}, ${mv.color}, ${intensity} motion, ${pace} pace, ${lights[0]}. ` +
-          `${core}. ${ratio}` +
-          `${isLast ? ', final payoff' : ', seamless cut'}\n\n` +
-          `Shots: ${shotBlock}`;
-      }
-
-      if (pkey === 'sora') {
-        return `[SCENE ${i+1}/${totalSegs} — ${actLabel} — ${seg}]\n\n` +
-          `A cinematic ${sv.render} sequence that ${narrative}. ` +
-          `The camera performs ${pick(cams)} with ${intensity} energy across this full 10-second clip. ` +
-          `The world is rendered in ${sv.surface} — every detail faithful to ${style} aesthetic. ` +
-          `${sv.motion} brings ${charSubject} to life with physical authenticity. ` +
-          `Lighting transitions from ${lights[0]} to ${lights[1]}, with ${lights[2]} adding depth. ` +
-          `The ${mv.color} palette carries emotional weight throughout. ` +
-          `${mv.energy.charAt(0).toUpperCase()+mv.energy.slice(1)} drives the scene's internal rhythm. ` +
-          `${audio !== 'None' ? 'Sound design: ' + sound + '.' : 'Silent — pure visual storytelling.'} ` +
-          `Story: "${storyCtx}". Ratio: ${ratio}. ` +
-          `${isLast ? 'This is the final segment. The closing image must carry full emotional payoff and linger.' : `Segment ${i+1} of ${totalSegs} — maintain exact visual world continuity into the next.`}\n\n` +
-          `DETAILED SHOT PLAN (10 shots × 1.0s):\n${shotBlock}`;
-      }
-
-      // universal
-      return `${style} cinematic animation — ${actLabel} (${seg})\n` +
-        `Story: ${narrative}\n` +
-        `Character: ${charSubject}\n` +
-        `Camera: ${pick(cams)} · Motion: ${intensity} · Pace: ${pace}\n` +
-        `Lighting: ${lights[0]}, ${lights[1]}\n` +
-        `Palette: ${mv.color} · Mood: ${mv.energy}\n` +
-        `Render: ${sv.render}\n` +
-        `${audio !== 'None' ? 'Audio: ' + sound : 'No audio cues'} · Ratio: ${ratio}\n` +
-        `${isLast ? 'FINAL SEGMENT — full resolution.' : `Segment ${i+1}/${totalSegs} — continues.`}\n\n` +
-        `SHOT BREAKDOWN:\n${shotBlock}`;
-    });
+    result[pkey] = sheets.map(() => FIXED_VIDEO_PROMPT);
   });
 
   return result;
@@ -3466,72 +3180,17 @@ function mockVideoPrompts(sheets, platforms) {
 // ══════════════════════════════════════════════════════════
 function buildShortVideoSegments(sheets) {
   const title   = selectedIdea?.title   || document.getElementById('f_topic').value.trim() || 'Cinematic Story';
-  const hook    = selectedIdea?.hook    || '';
-  const summary = selectedIdea?.summary || '';
-  const style   = curStyle;
-  const mood    = [...sel.mood][0]  || 'Dreamy';
   const ratio   = [...sel.rat][0]   || '9:16';
   const dur     = [...sel.dur][0]   || '30 detik';
   const durSec  = parseInt(dur) || 30;
   const totalSegs = sheets.length;
 
-  // ── Custom character injection ──
-  const customCharDesc = buildCustomCharDescription();
+  // ── Fixed video prompt ──
+  // A storyboard has already been generated and uploaded to the video tool,
+  // so the Quick Cuts video prompt is also always this exact instruction.
+  const FIXED_VIDEO_PROMPT = 'Use the uploaded storyboard as the exact visual and storytelling reference. Follow the storyboard panels exactly. Smooth cinematic transitions between storyboard panels';
 
-  // ── Shot types ──
-  const SHOT_TYPES  = ['ECU (extreme close-up)', 'CU (close-up)', 'MCU (medium close-up)', 'MS (medium shot)', 'WS (wide shot)', 'POV (point of view)', 'OTS (over the shoulder)', 'tracking shot', 'handheld shot'];
-  const CAM_MOVES   = ['slow push in', 'quick pan right', 'snap zoom forward', 'handheld drift left', 'dolly in', 'whip pan', 'tilt up reveal', 'arc around subject', 'pull back slowly'];
-  const LENSES      = ['24mm wide', '35mm standard', '50mm natural', '85mm portrait', '135mm compressed telephoto'];
-  const LIGHTINGS   = ['warm cinematic backlight', 'harsh directional key light', 'soft diffused ambient', 'neon accent rim light', 'golden hour glow', 'chiaroscuro contrast', 'cool blue practical light'];
-  const EMOTIONS    = ['tense and focused', 'surprised, wide-eyed', 'determined, jaw set', 'amused, slight smirk', 'shocked, breathless', 'relieved, eyes soft', 'curious, leaning forward', 'panicked, gasping', 'joyful, laughing'];
-  const SOUNDS      = [
-    'ambient street hum · footstep foley · sharp impact accent',
-    'low cinematic hum · fabric rustle · rhythmic click',
-    'crowd murmur fading · sharp breath · reverb tail',
-    'brief silence drop · single heartbeat · explosive cue',
-    'ambient wind · slow creak · distant echo',
-    'bass thud transition · glass tink · air whoosh',
-    'mechanical whir · breath catch · drum hit',
-    'nature ambient · twig snap · cinematic sting',
-  ];
-  const MICRO_ACTIONS = [
-    'fingers tense on surface — weight of decision felt',
-    'eyes flick sideways — clocking the threat',
-    'chest rises with sharp intake of breath',
-    'foot pivots, body weight shifts — about to move',
-    'jaw tightens, lips press — holding it all in',
-    'shoulders drop — moment of surrender or relief',
-    'brow furrows, head tilts — piecing it together',
-    'hands open wide — realization hits full force',
-  ];
-  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-
-  // ── Mood emotional arc ──
-  const MOOD_ARC = {
-    'Dreamy':    'Hazy wonder → quiet anticipation → soft revelation → lingering warmth',
-    'Epic':      'Quiet tension → building intensity → explosive climax → triumphant release',
-    'Dark':      'Unsettling calm → creeping dread → shocking reveal → haunting aftermath',
-    'Funny':     'Ordinary setup → escalating absurdity → comedic peak → ironic punchline',
-    'Emotional': 'Quiet vulnerability → suppressed pain → breaking point → cathartic release',
-    'Happy':     'Playful energy → joyful anticipation → euphoric peak → warm resolution',
-    'Cute':      'Innocent charm → gentle tension → adorable chaos → sweet payoff',
-  };
-  const moodArc = MOOD_ARC[mood] || 'Calm opening → rising tension → peak moment → satisfying resolution';
-
-  // ── Act labels for multi-segment continuity ──
   const ACT_LABELS = ['Opening', 'Rising Action', 'Climax', 'Resolution'];
-  const ACT_ENV = [
-    'establishing environment — world comes alive',
-    'new location, tension mounting — character on the move',
-    'peak dramatic space — everything converges here',
-    'final location — changed world, earned ending',
-  ];
-  const ACT_ACTIONS = [
-    'character enters frame, setting the stage with clear intent',
-    'obstacle or challenge emerges, momentum accelerates',
-    'decisive moment — maximum stakes, everything on the line',
-    'payoff lands — punchline, twist, or emotional climax',
-  ];
 
   const results = [];
 
@@ -3540,114 +3199,14 @@ function buildShortVideoSegments(sheets) {
     const tEnd    = tStart + 10;
     const actIdx  = Math.min(segIdx, ACT_LABELS.length - 1);
     const actLabel = ACT_LABELS[actIdx];
-    const isFirst = segIdx === 0;
-    const isLast  = segIdx === totalSegs - 1;
-
-    // ── Environment flow for this segment ──
-    const envBase = sheet.prompt
-      ? sheet.prompt.split(',').slice(0, 3).join(', ').replace(/cinematic storyboard sheet.*?style,?\s*/i, '').trim()
-      : `${style} environment`;
-    const envFlow = totalSegs === 1
-      ? `Opens in ${envBase} → builds through action → resolves in same space with transformed meaning`
-      : isFirst
-      ? `Establishes the world: ${envBase} → first movement reveals scale and atmosphere`
-      : isLast
-      ? `Final space mirrors the opening — same environment, transformed emotional weight → ironic or cathartic close`
-      : `Continues from previous segment → moves through ${ACT_ENV[actIdx].toLowerCase()} → propels into next beat`;
-
-    // ── Shot generation: 7–9 shots per 10s ──
-    const shotCount = 7 + Math.floor(Math.random() * 3);  // 7–9
-    const shots = [];
-    let cursor = tStart;
-
-    for (let s = 0; s < shotCount; s++) {
-      const isLastShot = s === shotCount - 1;
-      const rawDur  = isLastShot ? (tEnd - cursor) : (0.8 + Math.random() * 0.7);
-      const shotEnd = isLastShot ? tEnd : Math.min(cursor + rawDur, tEnd - 0.5);
-      const shotDur = (shotEnd - cursor).toFixed(1);
-
-      const shotType = pick(SHOT_TYPES);
-      const camMove  = pick(CAM_MOVES);
-      const lens     = pick(LENSES);
-      const lighting = pick(LIGHTINGS);
-      const emotion  = pick(EMOTIONS);
-      const sound    = pick(SOUNDS);
-      const micro    = pick(MICRO_ACTIONS);
-
-      // Action description — contextual based on position
-      let action;
-      if (s === 0 && isFirst) {
-        action = `"${title}" world snaps into frame — ${style} aesthetic fully alive, character caught mid-movement against rich environment. ${micro}`;
-      } else if (isLastShot && isLast) {
-        // Final shot of entire video — strong payoff
-        action = `FINAL BEAT: ${hook ? `"${hook.slice(0,60)}..."` : `"${title}" conclusion`} — payoff lands with full emotional or comedic weight. World holds the moment. ${micro}`;
-      } else if (isLastShot && !isLast) {
-        // Last shot of segment — seamless handoff
-        action = `Segment pivot — ${ACT_ACTIONS[Math.min(segIdx + 1, ACT_ACTIONS.length - 1)]}. Motion carries seamlessly into next sequence. ${micro}`;
-      } else {
-        // Mid-action shots — varied and dynamic
-        const MID = [
-          `character's ${pick(['hands', 'eyes', 'face', 'silhouette'])} in sharp focus — ${style} material texture pops with cinematic clarity. ${micro}`,
-          `environment shifts — new angle reveals narrative layer tied to "${title}". Camera alive with intent. ${micro}`,
-          `action peak: body language loud and clear even at cut speed — story beats land in single frame. ${micro}`,
-          `quick reaction shot — spatial relationship between character and world snaps into focus. ${micro}`,
-          `prop or environment detail carries narrative weight — ${summary ? summary.split('.')[0] : 'story context'} crystallised in one image. ${micro}`,
-          `character in motion — ${camMove} tracks forward, ${style} world streaming past. Energy rising. ${micro}`,
-          `tight two-shot or OTS — power dynamic or connection visible in body language and spacing. ${micro}`,
-        ];
-        action = MID[s % MID.length];
-      }
-
-      shots.push({
-        time: `${cursor.toFixed(1)}s–${shotEnd.toFixed(1)}s`,
-        dur:  shotDur,
-        shotType, camMove, lens, lighting, emotion, sound, action,
-      });
-
-      cursor = shotEnd;
-    }
-
-    // ── Segment highlight note ──
-    const highlightNote = isLast
-      ? 'HIGHLIGHT: Final shot delivers payoff (comedic, dramatic, or twist). Brief silence or sound drop before last shot for maximum impact.'
-      : isFirst
-      ? 'HIGHLIGHT: One establishing shot must convey the full tonal promise of the video.'
-      : 'HIGHLIGHT: Mid-segment moment of surprise, absurdity, or emotional spike to keep energy high.';
-
-    // ── Build the plain-text prompt (for copy/export) ──
     const segSuffix = totalSegs > 1 ? ` — Part ${segIdx + 1}/${totalSegs}` : '';
-    const charBlock = customCharDesc ? `\nCHARACTER: ${customCharDesc}\n` : '';
-    const plainText =
-`TITLE: "${title}${segSuffix}"
 
-FORMAT: ${ratio}, ${durSec}s total${totalSegs > 1 ? ` | Segment ${segIdx + 1}/${totalSegs}: ${tStart}s–${tEnd}s` : ''}, ultra-fast cinematic pacing, seamless quick cuts animation, no text overlay.
-
-STYLE: ${style} | expressive face | polished materials | cinematic lighting | exaggerated but believable motion | subtle motion blur | dynamic camera.
-${charBlock}
-MOOD: ${moodArc}
-
-ENVIRONMENT FLOW: ${envFlow}
-
-VIDEO SEQUENCE (FAST CUTS) — ${tStart}s to ${tEnd}s [${actLabel}]:
-${highlightNote}
-Rules: dense shot structure (0.8–1.5s/shot) · ${shotCount} shots · varied angles (ECU/CU/MCU/MS/WS/POV/OTS) · every shot contains motion · ${isLast ? 'final payoff/punchline' : 'seamless handoff to next segment'}.
-
-${shots.map(sh =>
-`[${sh.time}] ${sh.shotType}, ${sh.lens}, ${sh.camMove} — ${sh.action}
-  Lighting: ${sh.lighting}  |  Emotion: ${sh.emotion}
-  Sound: ${sh.sound}`
-).join('\n\n')}
-
-EDITING STYLE: Seamless quick cuts · Action-matched transitions · Occasional whip pan or motion blur · Rhythm: fast, tight, continuous.${totalSegs > 1 && !isLast ? `\n\nCONTINUITY NOTE: Segment ${segIdx + 2} picks up immediately — maintain same ${style} visual world, character appearance, and ${mood.toLowerCase()} mood arc.` : ''}`;
-
-    // ── Store shots array for rich HTML rendering ──
     results.push({
-      text:     plainText,
-      shots:    shots,
+      text: FIXED_VIDEO_PROMPT,
+      shots: [],
       meta: {
-        title, style, mood, ratio, durSec, tStart, tEnd, actLabel,
-        envFlow, moodArc, highlightNote, segIdx, totalSegs, segSuffix,
-        customCharDesc: customCharDesc || null
+        title, ratio, durSec, tStart, tEnd, actLabel,
+        segIdx, totalSegs, segSuffix
       }
     });
   });
@@ -3658,23 +3217,9 @@ EDITING STYLE: Seamless quick cuts · Action-matched transitions · Occasional w
 // ── Render Short Video card with rich HTML ──
 function renderShortVideoCard(item, i) {
   const m = item.meta;
-  const isLast  = i === m.totalSegs - 1;
   const segLabel = m.totalSegs > 1
     ? `Part ${m.segIdx + 1}/${m.totalSegs} &nbsp;·&nbsp; ${m.tStart}s–${m.tEnd}s &nbsp;·&nbsp; ${m.actLabel}`
     : `${m.durSec}s &nbsp;·&nbsp; Single Sequence`;
-
-  const shotsHtml = item.shots.map(sh => `
-    <div class="sv-shot-row">
-      <div class="sv-shot-time">${sh.time}</div>
-      <div class="sv-shot-body">
-        <div class="sv-shot-action"><strong>${sh.shotType}</strong>, ${sh.lens}, <em>${sh.camMove}</em> — ${escapeHtml(sh.action)}</div>
-        <div class="sv-shot-meta">
-          <span class="svm-l">💡 ${escapeHtml(sh.lighting)}</span>
-          <span class="svm-e">🎭 ${escapeHtml(sh.emotion)}</span>
-          <span class="svm-s">🔊 ${escapeHtml(sh.sound)}</span>
-        </div>
-      </div>
-    </div>`).join('');
 
   return `
   <div class="vp-panel-card" style="animation-delay:${i*.06}s; padding:1.4rem 1.5rem;">
@@ -3684,40 +3229,11 @@ function renderShortVideoCard(item, i) {
         <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:.92rem;color:#1A1510;">Quick Cuts Prompt ${i+1}</div>
         <div style="font-size:.7rem;color:#7A6A54;margin-top:1px;">⚡ ${segLabel}</div>
       </div>
-      <div style="margin-left:auto;">
-        <span style="font-size:.62rem;font-weight:700;padding:.22rem .6rem;border-radius:6px;background:#D8E4BE;color:#5A6B3C;text-transform:uppercase;letter-spacing:.04em;">${item.shots.length} shots</span>
-      </div>
     </div>
 
     <div class="vp-prompt-box">
-      <div class="vpb-corner">Quick Cuts Template</div>
-
-      <!-- Header block -->
-      <div class="sv-header-block">
-        <div class="sv-seg-badge">⚡ ${m.actLabel} &nbsp;·&nbsp; ${m.tStart}s–${m.tEnd}s</div>
-        <div class="sv-field"><span class="sv-key">TITLE</span><span class="sv-val">"${escapeHtml(m.title)}${escapeHtml(m.segSuffix)}"</span></div>
-        <div class="sv-field"><span class="sv-key">FORMAT</span><span class="sv-val">${m.ratio}, ${m.durSec}s total${m.totalSegs>1?' | Seg '+m.segIdx+'/'+m.totalSegs:''}, ultra-fast cinematic pacing, seamless quick cuts animation</span></div>
-        <div class="sv-field"><span class="sv-key">STYLE</span><span class="sv-val">${escapeHtml(m.style)} · expressive face · polished materials · cinematic lighting · subtle motion blur</span></div>
-        ${m.customCharDesc ? `<div class="sv-field"><span class="sv-key">CHARACTER</span><span class="sv-val" style="color:#D45C3C;font-weight:600">${escapeHtml(m.customCharDesc)}</span></div>` : ''}
-        <div class="sv-field"><span class="sv-key">MOOD ARC</span><span class="sv-val">${escapeHtml(m.moodArc)}</span></div>
-        <div class="sv-field"><span class="sv-key">ENV FLOW</span><span class="sv-val">${escapeHtml(m.envFlow)}</span></div>
-      </div>
-
-      <!-- Shots -->
-      <div class="sv-section-title">⚡ VIDEO SEQUENCE (${m.tStart}s–${m.tEnd}s) — ${item.shots.length} shots · 0.8–1.5s each</div>
-      <div style="background:rgba(232,132,42,.06);border-radius:6px;padding:.5rem .6rem;margin-bottom:.55rem;font-size:.67rem;color:#A89880;line-height:1.5;">
-        ${escapeHtml(m.highlightNote)}
-      </div>
-      ${shotsHtml}
-
-      <!-- Editing style -->
-      <div class="sv-edit-row">
-        <span class="sv-edit-pill">Seamless quick cuts</span>
-        <span class="sv-edit-pill">Action-matched transitions</span>
-        <span class="sv-edit-pill">Whip pan / motion blur</span>
-        <span class="sv-edit-pill">Fast · tight · continuous</span>
-        ${!isLast ? `<span class="sv-edit-pill" style="color:#E8842A">→ Continues to Part ${i+2}</span>` : '<span class="sv-edit-pill" style="color:#5A6B3C">✓ Final segment</span>'}
-      </div>
+      <div class="vpb-corner">Storyboard Reference</div>
+      <div class="vp-prompt-text">${escapeHtml(item.text)}</div>
     </div>
 
     <div class="vp-panel-acts" style="margin-top:.75rem;">
@@ -3824,8 +3340,8 @@ function renderVideoPromptsShort() {
     <div class="vp-tips">
       <div class="vp-tips-title">&#128161; Tips Quick Cuts Animation</div>
       <div class="vp-tips-list">
-        <div class="vp-tips-item">Paste setiap prompt ke <strong>Veo 3, Kling, atau Runway</strong> satu per satu sesuai urutan segmen untuk hasil yang berkesinambungan.</div>
-        <div class="vp-tips-item">Setiap prompt sudah mencakup <strong>7–9 shot dalam 10 detik</strong> — detail shot type, kamera, lighting, emosi, dan sound design.</div>
+        <div class="vp-tips-item">Paste setiap prompt ke <strong>Veo 3, Kling, atau Runway</strong> bersamaan dengan storyboard sheet yang sesuai, satu per satu sesuai urutan segmen.</div>
+        <div class="vp-tips-item">Setiap prompt mengarahkan AI video untuk <strong>mengikuti panel storyboard yang sudah diupload</strong> secara persis — pastikan storyboard sheet untuk segmen tersebut sudah di-attach.</div>
         ${items.length > 1 ? `<div class="vp-tips-item"><strong>Continuity note:</strong> generate segmen 1 dulu, download hasilnya, lalu gunakan sebagai visual reference saat generate segmen 2 — untuk konsistensi karakter dan dunia.</div>` : ''}
         <div class="vp-tips-item">Gunakan <strong>Export TXT</strong> untuk menyimpan semua prompt sekaligus dan mudah di-paste ke editor.</div>
       </div>
@@ -4984,7 +4500,7 @@ function pickStylePopup(el, name) {
   <div class="studio-body">
     <div class="s-tag" style="background:#E8E4F8;border-color:rgba(74,61,150,.2);color:#4A3D96">&#127916; Step 3</div>
     <h2 class="s-h1">Video Prompt Generator</h2>
-    <p class="s-sub" id="vp-desc-text">AI membuat <strong>1 cinematic video prompt per 10 detik</strong>. Setiap prompt mencakup sequence penuh — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora. Bukan per panel, bukan per shot.</p>
+    <p class="s-sub" id="vp-desc-text">AI membuat <strong>1 video prompt per 10 detik</strong>. Karena storyboard sudah kamu generate di Step 2, setiap prompt cukup berisi instruksi untuk mengikuti storyboard yang diupload — siap di-paste langsung ke Veo, Kling, Runway, Pika, atau Sora bersama storyboard sheet-nya.</p>
 
     <!-- Storyboard summary (filled by renderVpSummary) -->
     <div id="vpSummaryWrap"></div>
